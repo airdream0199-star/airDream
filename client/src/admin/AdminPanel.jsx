@@ -26,13 +26,13 @@ export default function AdminPanel() {
     packages: [],
     reviews: [],
     settings: {
-      brandName: "Air Dream",
+      brandName: "AIR DREAM",
       brandTagline: "TRAVEL TOURISM LLC",
       phone: "+971 58 833 8927",
       whatsapp: "971588338927",
       email: "sales@airdreamtravel.com",
       address: "Office 402, Al Asmawi Building, Sheikh Zayed Road, Dubai, UAE",
-      logoUrl: "/assets/air-dream-badge.svg",
+      logoUrl: "/assets/air-dream-logo.png",
       aboutQuote:
         "Your trusted gateway to magical journeys, sacred pilgrimages, and bespoke world discoveries.",
       aboutArchImg:
@@ -70,6 +70,11 @@ export default function AdminPanel() {
   const [modalFormData, setModalFormData] = useState({});
   const [imagePreview, setImagePreview] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [inclusionsRawText, setInclusionsRawText] = useState("");
+  const [singleInclusionInput, setSingleInclusionInput] = useState("");
+  const [isSubmittingModal, setIsSubmittingModal] = useState(false);
+  const [isSavingEnquiry, setIsSavingEnquiry] = useState(false);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   // Settings Form State
   const [settingsForm, setSettingsForm] = useState(siteData.settings);
@@ -271,15 +276,29 @@ export default function AdminPanel() {
 
   // Save site data to localStorage, sync to backend, and dispatch events for live site synchronization
   const saveSiteData = (newData) => {
-    setSiteData(newData);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
-    window.dispatchEvent(
-      new CustomEvent("airdream:data_updated", { detail: newData }),
-    );
-    window.dispatchEvent(
-      new CustomEvent("airdream-data-updated", { detail: newData }),
-    );
-    api.put("/site-content", newData).catch(() => {});
+    try {
+      setSiteData(newData);
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
+      } catch (storageErr) {
+        console.warn("Storage quota exceeded or restricted, saving essential state:", storageErr);
+        try {
+          const sanitized = JSON.parse(JSON.stringify(newData));
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+        } catch (innerErr) {
+          console.warn("Could not save to localStorage:", innerErr);
+        }
+      }
+      window.dispatchEvent(
+        new CustomEvent("airdream:data_updated", { detail: newData }),
+      );
+      window.dispatchEvent(
+        new CustomEvent("airdream-data-updated", { detail: newData }),
+      );
+      api.put("/site-content", newData).catch(() => {});
+    } catch (err) {
+      console.error("Error in saveSiteData:", err);
+    }
   };
 
   // Logout Handler
@@ -296,6 +315,15 @@ export default function AdminPanel() {
     setImagePreview("");
     const emptyForm = getEmptyFormFor(collection);
     setModalFormData(emptyForm);
+    if (collection === "package") {
+      const initIncs = emptyForm.inclusions || [];
+      setInclusionsRawText(
+        Array.isArray(initIncs)
+          ? initIncs.map((i) => (typeof i === "object" ? i.text : i)).join(", ")
+          : ""
+      );
+      setSingleInclusionInput("");
+    }
     setIsModalOpen(true);
   };
 
@@ -306,10 +334,24 @@ export default function AdminPanel() {
     setEditingItemId(itemId);
     const preview = item.image || item.avatar || item.img || "";
     setImagePreview(preview);
+    const isFeat = Boolean(item.featured ?? item.isFeatured);
+    const initIncs = Array.isArray(item.inclusions)
+      ? item.inclusions.map((i) => (typeof i === "object" ? i.text : i)).filter(Boolean)
+      : (typeof item.inclusions === "string" ? item.inclusions.split(",").map((s) => s.trim()).filter(Boolean) : []);
+
     setModalFormData({
       ...item,
+      featured: isFeat,
+      isFeatured: isFeat,
+      category: item.category || "tours",
+      inclusions: initIncs,
       image: item.image || item.img || preview,
     });
+
+    if (collection === "package") {
+      setInclusionsRawText(initIncs.join(", "));
+      setSingleInclusionInput("");
+    }
     setIsModalOpen(true);
   };
 
@@ -319,6 +361,8 @@ export default function AdminPanel() {
     setEditingItemId(null);
     setModalFormData({});
     setImagePreview("");
+    setInclusionsRawText("");
+    setSingleInclusionInput("");
   };
 
   // Helper for empty form state
@@ -353,13 +397,17 @@ export default function AdminPanel() {
       case "tour":
         return {
           title: "",
-          tagline: "Full Day Private 4WD Excursion",
-          image: "",
-          duration: "Full Day",
+          tagline: "Dubai, UAE",
+          location: "Dubai, UAE",
+          image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80",
+          duration: "08-Hrs",
+          hours: "08-Hrs",
           vehicle: "4WD Cruiser",
-          guide: "Licensed Guide",
+          carHours: "08-Hrs Car",
+          guide: "Driver-guide",
+          capacity: "4 Persons",
           price: "$120",
-          rating: 4.9,
+          rating: 5.0,
           inclusions: [
             "4WD Land Cruiser",
             "Hotel Pickup & Drop",
@@ -384,12 +432,14 @@ export default function AdminPanel() {
       case "package":
         return {
           title: "",
-          category: "Holiday Package",
+          category: "tours",
           badge: "Best Seller",
           badgeColor: "bg-emerald-600",
           image: "",
           duration: "5 Days / 4 Nights",
           price: "$799",
+          featured: false,
+          isFeatured: false,
           inclusions: [
             "5-Star Hotel",
             "Daily Breakfast",
@@ -422,11 +472,11 @@ export default function AdminPanel() {
     }
   };
 
-  // Universal Image Uploader: Posts to /api/upload with fallback to base64 DataURL
+  // Universal Image Uploader: Posts to /api/upload with fallback to compressed DataURL
   const uploadImageFile = async (file) => {
     if (!file) return null;
-    if (file.size > 15 * 1024 * 1024) {
-      toast.error("File size exceeds 15MB. Please choose a smaller image.");
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("File size exceeds 20MB. Please choose a smaller image.");
       return null;
     }
 
@@ -435,21 +485,51 @@ export default function AdminPanel() {
       formData.append("file", file);
       const res = await api.post("/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
+        timeout: 4000,
       });
       if (res.data?.url) {
         return res.data.url;
       }
     } catch (err) {
       console.warn(
-        "Backend /api/upload error, falling back to local data URL:",
-        err,
+        "Backend /api/upload error, falling back to local compressed image:",
+        err?.message,
       );
     }
 
-    // Fallback: Read as base64 DataURL
+    // Fallback: Read and compress image via HTML5 Canvas to prevent storage quota issues
     return new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onload = (evt) => resolve(evt.target.result);
+      reader.onload = (evt) => {
+        const rawUrl = evt.target.result;
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const canvas = document.createElement("canvas");
+            let { width, height } = img;
+            const maxDim = 1200;
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressed = canvas.toDataURL("image/jpeg", 0.82);
+            resolve(compressed);
+          } catch (canvasErr) {
+            resolve(rawUrl);
+          }
+        };
+        img.onerror = () => resolve(rawUrl);
+        img.src = rawUrl;
+      };
       reader.onerror = () => resolve(null);
       reader.readAsDataURL(file);
     });
@@ -499,137 +579,226 @@ export default function AdminPanel() {
     }
   };
 
-  // Submit Modal Form
+  // Submit Modal Form (Instant Optimistic Save for All Card Collections)
   const handleModalSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmittingModal) return;
 
-    const collKeyMap = {
-      wallpaper: "wallpapers",
-      attraction: "attractions",
-      gallery: "gallery",
-      tour: "tours",
-      transfer: "transfers",
-      package: "packages",
-      review: "reviews",
-      whyChooseUs: "whyChooseUs",
-      feature: "whyChooseUs",
-    };
-    const collectionKey = collKeyMap[modalCollection];
-    const currentList = [...(siteData[collectionKey] || [])];
-
-    let updatedList;
-    if (editingItemId) {
-      // Edit existing
-      updatedList = currentList.map((item) => {
-        const id = item.id || item._id;
-        if (id === editingItemId) {
-          return { ...item, ...modalFormData };
-        }
-        return item;
-      });
-      toast.success(`Updated ${modalCollection} successfully!`);
-    } else {
-      // Add new
-      const newItem = {
-        ...modalFormData,
-        id: `${modalCollection.slice(0, 3)}-${Date.now()}`,
-      };
-      updatedList = [newItem, ...currentList];
-      toast.success(`Added new ${modalCollection} successfully!`);
+    if (uploadingImage) {
+      toast.loading("Please wait for picture to finish uploading...", { id: "upload-wait", duration: 1500 });
+      return;
     }
 
-    const updatedSiteData = {
-      ...siteData,
-      [collectionKey]: updatedList,
-    };
-    saveSiteData(updatedSiteData);
+    setIsSubmittingModal(true);
 
-    // Backend Synchronisation Attempt across all endpoints
     try {
-      if (modalCollection === "whyChooseUs" || modalCollection === "feature") {
-        if (!editingItemId) {
-          api.post("/why-choose-us", modalFormData).catch(() => {});
-        } else {
-          api
-            .put(`/why-choose-us/${editingItemId}`, modalFormData)
-            .catch(() => {});
-        }
-      } else if (modalCollection === "wallpaper") {
-        if (!editingItemId) {
-          api.post("/wallpapers", modalFormData).catch(() => {});
-        } else {
-          api
-            .put(`/wallpapers/${editingItemId}`, modalFormData)
-            .catch(() => {});
-        }
-      } else if (modalCollection === "attraction") {
-        if (!editingItemId) {
-          api
-            .post("/activities", {
-              name: modalFormData.name,
-              title: modalFormData.name,
-              activities: modalFormData.activities,
-              price:
-                parseFloat(
-                  (modalFormData.price || "0").replace(/[^0-9.]/g, ""),
-                ) || 50,
-              image: modalFormData.image,
-              images: [modalFormData.image],
-            })
-            .catch(() => {});
-        } else {
-          api
-            .put(`/activities/${editingItemId}`, modalFormData)
-            .catch(() => {});
-        }
-      } else if (modalCollection === "tour") {
-        if (!editingItemId) {
-          api.post("/tours", modalFormData).catch(() => {});
-        } else {
-          api.put(`/tours/${editingItemId}`, modalFormData).catch(() => {});
-        }
-      } else if (modalCollection === "transfer") {
-        if (!editingItemId) {
-          api.post("/transfers", modalFormData).catch(() => {});
-        } else {
-          api.put(`/transfers/${editingItemId}`, modalFormData).catch(() => {});
-        }
-      } else if (modalCollection === "gallery") {
-        if (!editingItemId) {
-          api.post("/gallery", modalFormData).catch(() => {});
-        } else {
-          api.put(`/gallery/${editingItemId}`, modalFormData).catch(() => {});
-        }
-      } else if (modalCollection === "package") {
-        if (!editingItemId) {
-          api.post("/travel-deals", modalFormData).catch(() => {});
-        } else {
-          api
-            .put(`/travel-deals/${editingItemId}`, modalFormData)
-            .catch(() => {});
-        }
-      } else if (modalCollection === "review") {
-        if (!editingItemId) {
-          api
-            .post("/testimonials", {
-              name: modalFormData.name,
-              quote: modalFormData.quote,
-              review: modalFormData.quote,
-              avatar: modalFormData.avatar,
-              rating: modalFormData.stars || 5,
-            })
-            .catch(() => {});
-        } else {
-          api
-            .put(`/testimonials/${editingItemId}`, modalFormData)
-            .catch(() => {});
-        }
+      const collKeyMap = {
+        wallpaper: "wallpapers",
+        attraction: "attractions",
+        gallery: "gallery",
+        tour: "tours",
+        transfer: "transfers",
+        package: "packages",
+        review: "reviews",
+        whyChooseUs: "whyChooseUs",
+        feature: "whyChooseUs",
+      };
+      const collectionKey = collKeyMap[modalCollection];
+      if (!collectionKey) {
+        toast.error("Unknown card collection type.");
+        setIsSubmittingModal(false);
+        return;
       }
-    } catch (e) {
-      // Graceful fallback
-    }
 
-    closeModal();
+      const currentList = [...(siteData[collectionKey] || [])];
+
+      let formDataToSave = { ...modalFormData };
+
+      // Ensure required fallbacks for smooth, error-free saves
+      if (modalCollection === "package") {
+        let finalIncs = modalFormData.inclusions || [];
+        if (typeof inclusionsRawText === "string" && inclusionsRawText.trim() !== "") {
+          finalIncs = inclusionsRawText.split(",").map((s) => s.trim()).filter(Boolean);
+        }
+        formDataToSave = {
+          ...modalFormData,
+          title: (modalFormData.title || "Exclusive Travel Package").trim(),
+          price: (modalFormData.price || "$799").trim(),
+          category: modalFormData.category || "tours",
+          duration: modalFormData.duration || "5 Days / 4 Nights",
+          badge: modalFormData.badge || "Best Seller",
+          inclusions: Array.isArray(finalIncs) && finalIncs.length > 0 ? finalIncs : ["5-Star Hotel", "Daily Breakfast", "VIP Transfers"],
+          featured: Boolean(modalFormData.featured),
+          isFeatured: Boolean(modalFormData.featured),
+        };
+      } else if (modalCollection === "wallpaper") {
+        formDataToSave = {
+          ...modalFormData,
+          badge: (modalFormData.badge || "Premium Travel").trim(),
+          badgeIcon: modalFormData.badgeIcon || "fa-plane",
+          title: (modalFormData.title || "Experience World-Class").trim(),
+          highlight: (modalFormData.highlight || "Travel Deals").trim(),
+          desc: modalFormData.desc || "Unforgettable journeys tailored to perfection.",
+        };
+      } else if (modalCollection === "attraction") {
+        formDataToSave = {
+          ...modalFormData,
+          name: (modalFormData.name || "Dubai Landmark Attraction").trim(),
+          price: (modalFormData.price || "$49").trim(),
+          activities: modalFormData.activities || "Multiple activities available",
+        };
+      } else if (modalCollection === "tour") {
+        const cleanPrice = (modalFormData.price || "$120").trim();
+        formDataToSave = {
+          ...modalFormData,
+          title: (modalFormData.title || "Guided Excursion Tour").trim(),
+          price: cleanPrice.startsWith("$") || cleanPrice.toLowerCase().includes("aed") || cleanPrice.toLowerCase().includes("omr") ? cleanPrice : `$${cleanPrice}`,
+          duration: modalFormData.duration || modalFormData.hours || "08-Hrs",
+          hours: modalFormData.hours || modalFormData.duration || "08-Hrs",
+          location: (modalFormData.location || modalFormData.tagline || "Dubai, UAE").trim(),
+          tagline: (modalFormData.tagline || modalFormData.location || "Dubai, UAE").trim(),
+          vehicle: modalFormData.vehicle || modalFormData.carHours || "4WD Cruiser",
+          carHours: modalFormData.carHours || modalFormData.vehicle || "08-Hrs Car",
+          guide: (modalFormData.guide || "Driver-guide").trim(),
+          capacity: (modalFormData.capacity || modalFormData.groupSize || "4 Persons").trim(),
+          rating: modalFormData.rating ? `${modalFormData.rating}` : "5.0",
+        };
+      } else if (modalCollection === "transfer") {
+        formDataToSave = {
+          ...modalFormData,
+          title: (modalFormData.title || "VIP Chauffeur & Airport Transfer").trim(),
+          price: (modalFormData.price || "$45").trim(),
+          category: modalFormData.category || "Luxury Fleet",
+        };
+      } else if (modalCollection === "gallery") {
+        formDataToSave = {
+          ...modalFormData,
+          title: (modalFormData.title || "Scenic Travel Moments").trim(),
+          location: modalFormData.location || "Dubai & Salalah",
+        };
+      } else if (modalCollection === "review") {
+        formDataToSave = {
+          ...modalFormData,
+          name: (modalFormData.name || "Verified Guest").trim(),
+          quote: (modalFormData.quote || "Exceptional service and unforgettable trip!").trim(),
+          stars: modalFormData.stars || 5,
+        };
+      } else if (modalCollection === "whyChooseUs" || modalCollection === "feature") {
+        formDataToSave = {
+          ...modalFormData,
+          title: (modalFormData.title || "Premium Service Guarantee").trim(),
+          description: (modalFormData.description || modalFormData.desc || "Dedicated round-the-clock concierge support.").trim(),
+          desc: (modalFormData.description || modalFormData.desc || "Dedicated round-the-clock concierge support.").trim(),
+        };
+      }
+
+      let updatedList;
+      if (editingItemId) {
+        // Edit existing
+        updatedList = currentList.map((item) => {
+          const id = item.id || item._id;
+          if (id === editingItemId) {
+            return { ...item, ...formDataToSave, id };
+          }
+          return item;
+        });
+        toast.success(`Updated ${modalCollection} successfully!`);
+      } else {
+        // Add new
+        const newItem = {
+          ...formDataToSave,
+          id: `${modalCollection.slice(0, 3)}-${Date.now()}`,
+        };
+        updatedList = [newItem, ...currentList];
+        toast.success(`Added new ${modalCollection} successfully!`);
+      }
+
+      const updatedSiteData = {
+        ...siteData,
+        [collectionKey]: updatedList,
+      };
+
+      // 1. Instant optimistic local save and live event trigger
+      saveSiteData(updatedSiteData);
+
+      // 2. Close modal immediately so interface is super snappy
+      closeModal();
+
+      // 3. Fire-and-forget background server sync
+      setTimeout(() => {
+        try {
+          if (modalCollection === "whyChooseUs" || modalCollection === "feature") {
+            if (!editingItemId) {
+              api.post("/why-choose-us", formDataToSave).catch(() => {});
+            } else {
+              api.put(`/why-choose-us/${editingItemId}`, formDataToSave).catch(() => {});
+            }
+          } else if (modalCollection === "wallpaper") {
+            if (!editingItemId) {
+              api.post("/wallpapers", formDataToSave).catch(() => {});
+            } else {
+              api.put(`/wallpapers/${editingItemId}`, formDataToSave).catch(() => {});
+            }
+          } else if (modalCollection === "attraction") {
+            if (!editingItemId) {
+              api.post("/activities", {
+                name: formDataToSave.name,
+                title: formDataToSave.name,
+                activities: formDataToSave.activities,
+                price: parseFloat((formDataToSave.price || "0").replace(/[^0-9.]/g, "")) || 50,
+                image: formDataToSave.image,
+                images: [formDataToSave.image],
+              }).catch(() => {});
+            } else {
+              api.put(`/activities/${editingItemId}`, formDataToSave).catch(() => {});
+            }
+          } else if (modalCollection === "tour") {
+            if (!editingItemId) {
+              api.post("/tours", formDataToSave).catch(() => {});
+            } else {
+              api.put(`/tours/${editingItemId}`, formDataToSave).catch(() => {});
+            }
+          } else if (modalCollection === "transfer") {
+            if (!editingItemId) {
+              api.post("/transfers", formDataToSave).catch(() => {});
+            } else {
+              api.put(`/transfers/${editingItemId}`, formDataToSave).catch(() => {});
+            }
+          } else if (modalCollection === "gallery") {
+            if (!editingItemId) {
+              api.post("/gallery", formDataToSave).catch(() => {});
+            } else {
+              api.put(`/gallery/${editingItemId}`, formDataToSave).catch(() => {});
+            }
+          } else if (modalCollection === "package") {
+            if (!editingItemId) {
+              api.post("/travel-deals", formDataToSave).catch(() => {});
+            } else {
+              api.put(`/travel-deals/${editingItemId}`, formDataToSave).catch(() => {});
+            }
+          } else if (modalCollection === "review") {
+            if (!editingItemId) {
+              api.post("/testimonials", {
+                name: formDataToSave.name,
+                quote: formDataToSave.quote,
+                review: formDataToSave.quote,
+                avatar: formDataToSave.avatar,
+                rating: formDataToSave.stars || 5,
+              }).catch(() => {});
+            } else {
+              api.put(`/testimonials/${editingItemId}`, formDataToSave).catch(() => {});
+            }
+          }
+        } catch (syncErr) {
+          console.warn("Background API sync handled locally:", syncErr);
+        }
+      }, 0);
+    } catch (err) {
+      console.error("Error submitting modal card form:", err);
+      toast.error("Could not save card changes. Please check input values.");
+    } finally {
+      setIsSubmittingModal(false);
+    }
   };
 
   // Delete Item Handler
@@ -675,6 +844,123 @@ export default function AdminPanel() {
     }
   };
 
+  // Quick toggle package featured status directly from card
+  const handleTogglePackageFeatured = (packageId, newStatus) => {
+    const currentPackages = siteData.packages || [];
+    const updatedPackages = currentPackages.map((pkg) => {
+      const id = pkg.id || pkg._id;
+      if (id === packageId) {
+        return {
+          ...pkg,
+          featured: newStatus,
+          isFeatured: newStatus,
+        };
+      }
+      return pkg;
+    });
+
+    const updatedSiteData = {
+      ...siteData,
+      packages: updatedPackages,
+    };
+
+    saveSiteData(updatedSiteData);
+    toast.success(
+      newStatus
+        ? "Package marked as Featured!"
+        : "Package removed from Featured.",
+    );
+
+    try {
+      api
+        .put(`/travel-deals/${packageId}`, {
+          featured: newStatus,
+          isFeatured: newStatus,
+        })
+        .catch(() => {});
+    } catch (e) {}
+  };
+
+  // Inclusions Management Handlers for Package Modal
+  const handleAddSingleInclusion = (e) => {
+    if (e) e.preventDefault();
+    const trimmed = singleInclusionInput.trim();
+    if (!trimmed) return;
+
+    const newItems = trimmed
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const currentList = Array.isArray(modalFormData.inclusions)
+      ? modalFormData.inclusions.map((i) => (typeof i === "object" ? i.text : i))
+      : [];
+
+    const merged = [...currentList];
+    newItems.forEach((item) => {
+      if (!merged.includes(item)) {
+        merged.push(item);
+      }
+    });
+
+    setModalFormData((prev) => ({
+      ...prev,
+      inclusions: merged,
+    }));
+    setInclusionsRawText(merged.join(", "));
+    setSingleInclusionInput("");
+  };
+
+  const handleRemoveInclusion = (indexToRemove) => {
+    const currentList = Array.isArray(modalFormData.inclusions)
+      ? modalFormData.inclusions.map((i) => (typeof i === "object" ? i.text : i))
+      : [];
+    const updated = currentList.filter((_, idx) => idx !== indexToRemove);
+    setModalFormData((prev) => ({
+      ...prev,
+      inclusions: updated,
+    }));
+    setInclusionsRawText(updated.join(", "));
+  };
+
+  const handleRawInclusionsChange = (text) => {
+    setInclusionsRawText(text);
+    const parsed = text
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    setModalFormData((prev) => ({
+      ...prev,
+      inclusions: parsed,
+    }));
+  };
+
+  const handleQuickAddInclusion = (presetName) => {
+    const currentList = Array.isArray(modalFormData.inclusions)
+      ? modalFormData.inclusions.map((i) => (typeof i === "object" ? i.text : i))
+      : [];
+
+    if (currentList.includes(presetName)) {
+      handleRemoveInclusion(currentList.indexOf(presetName));
+      return;
+    }
+
+    const updated = [...currentList, presetName];
+    setModalFormData((prev) => ({
+      ...prev,
+      inclusions: updated,
+    }));
+    setInclusionsRawText(updated.join(", "));
+  };
+
+  const handleClearAllInclusions = () => {
+    setModalFormData((prev) => ({
+      ...prev,
+      inclusions: [],
+    }));
+    setInclusionsRawText("");
+  };
+
   // Enquiries Handlers
   const handleToggleEnquiryRead = async (enquiryId, currentRead) => {
     const newStatus = !currentRead;
@@ -712,10 +998,14 @@ export default function AdminPanel() {
 
   const handleCreateManualEnquiry = async (e) => {
     e.preventDefault();
+    if (isSavingEnquiry) return;
+
     if (!newEnquiryForm.fullName.trim() || !newEnquiryForm.phone.trim()) {
       toast.error("Please provide at least customer name and phone number.");
       return;
     }
+
+    setIsSavingEnquiry(true);
 
     const newEnq = {
       _id: `enq-${Date.now()}`,
@@ -730,15 +1020,12 @@ export default function AdminPanel() {
       createdAt: new Date().toISOString(),
     };
 
-    try {
-      await api.post("/enquiries", newEnq);
-    } catch (err) {
-      console.warn("Backend save fallback, saving locally:", err.message);
-    }
-
+    // Instant local state update
     setEnquiries((prev) => {
       const updated = [newEnq, ...prev];
-      localStorage.setItem("air_dream_enquiries_v2", JSON.stringify(updated));
+      try {
+        localStorage.setItem("air_dream_enquiries_v2", JSON.stringify(updated));
+      } catch (err) {}
       return updated;
     });
 
@@ -751,17 +1038,31 @@ export default function AdminPanel() {
       serviceRequired: "Dubai Luxury Tour",
       message: "",
     });
+    setIsSavingEnquiry(false);
+
+    // Non-blocking background API sync
+    api.post("/enquiries", newEnq).catch((err) => {
+      console.warn("Backend save fallback, saved locally:", err?.message);
+    });
   };
 
-  // Save Settings Handler
+  // Save Settings Handler (Instant Optimistic Save)
   const handleSaveSettings = (e) => {
     e.preventDefault();
-    const updated = {
-      ...siteData,
-      settings: settingsForm,
-    };
-    saveSiteData(updated);
-    toast.success("Site settings and contact details saved successfully!");
+    if (isSavingSettings) return;
+    setIsSavingSettings(true);
+    try {
+      const updated = {
+        ...siteData,
+        settings: settingsForm,
+      };
+      saveSiteData(updated);
+      toast.success("Site settings and contact details saved successfully!");
+    } catch (err) {
+      toast.error("Could not save settings.");
+    } finally {
+      setTimeout(() => setIsSavingSettings(false), 300);
+    }
   };
 
   // Export JSON backup
@@ -872,7 +1173,7 @@ export default function AdminPanel() {
       desc: "Customize the feature cards (Tour Guide, Friendly Price, Reliable Tour, 24/7 Support) with pictures, badges, and pricing",
     },
     attractions: {
-      title: "Top Dubai Attractions",
+      title: "Recommended Attractions",
       desc: "Edit or add Dubai landmarks, activities count, entry ticket prices, and photos",
     },
     gallery: {
@@ -880,7 +1181,7 @@ export default function AdminPanel() {
       desc: "Upload photos from your computer or paste image links to show in the photo gallery",
     },
     tours: {
-      title: "Tour - Trips (Salalah)",
+      title: "Attractions - Ticket",
       desc: "Manage tour itineraries, duration, 4WD vehicles, driver-guide, prices, and bookings",
     },
     transfers: {
@@ -945,19 +1246,21 @@ export default function AdminPanel() {
             style={{ textDecoration: "none" }}
           >
             <img
-              src={siteData.settings?.logoUrl || "/assets/air-dream-badge.svg"}
-              alt="Air Dream Logo"
+              src={siteData.settings?.logoUrl || "/assets/air-dream-logo.png"}
+              alt="AIR DREAM Logo"
               className="admin-navbar-logo"
               id="adminSidebarLogo"
               onError={(e) => {
                 e.target.onerror = null;
-                e.target.src = "/image/logo.png";
+                e.target.src = "/assets/air-dream-logo.png";
               }}
             />
             <div className="air-dream-brand-text">
-              <span className="air-dream-brand-name">Air Dream</span>
-              <span className="air-dream-brand-sub">TRAVEL TOURISM</span>
-              <span className="air-dream-brand-llc">LLC</span>
+              <span className="air-dream-brand-name">AIR DREAM</span>
+              <div className="air-dream-brand-sub-wrap">
+                <span className="air-dream-brand-sub">TRAVEL TOURISM</span>
+                <span className="air-dream-brand-llc">LLC</span>
+              </div>
             </div>
           </Link>
         </div>
@@ -1050,7 +1353,7 @@ export default function AdminPanel() {
             }}
           >
             <span className="tab-btn-content">
-              <i className="fa-solid fa-mountain-sun"></i> Tour - Trips
+              <i className="fa-solid fa-mountain-sun"></i> Attractions - Ticket
             </span>
             <span className="tab-badge">{siteData.tours?.length || 0}</span>
           </button>
@@ -1340,7 +1643,7 @@ export default function AdminPanel() {
                   </div>
                   <div className="stat-details">
                     <h3>{siteData.tours?.length || 0}</h3>
-                    <p>Tour - Trips</p>
+                    <p>Attractions - Ticket</p>
                   </div>
                 </div>
 
@@ -1810,8 +2113,7 @@ export default function AdminPanel() {
               <div className="view-header">
                 <div className="view-header-title">
                   <h2>
-                    <i className="fa-solid fa-landmark text-teal"></i> Top Dubai
-                    Attractions
+                    <i className="fa-solid fa-landmark text-teal"></i> Recommended Attractions
                   </h2>
                   <p>
                     Edit or add Dubai landmarks, activities count, entry ticket
@@ -1951,8 +2253,7 @@ export default function AdminPanel() {
               <div className="view-header">
                 <div className="view-header-title">
                   <h2>
-                    <i className="fa-solid fa-mountain-sun text-gold"></i> Tour
-                    - Trips (Salalah)
+                    <i className="fa-solid fa-mountain-sun text-gold"></i> Attractions - Ticket
                   </h2>
                   <p>
                     Manage tour itineraries, duration, 4WD vehicles,
@@ -2001,18 +2302,23 @@ export default function AdminPanel() {
                       </div>
                       <div className="item-card-body">
                         <h4 className="item-card-title">{tour.title}</h4>
-                        <div className="item-card-sub">{tour.tagline}</div>
+                        <div className="item-card-sub">{tour.location || tour.tagline || "Dubai, UAE"}</div>
                         <div className="item-features-list">
                           <span className="feature-pill">
                             <i className="fa-regular fa-clock"></i>{" "}
-                            {tour.duration}
+                            {tour.duration || tour.hours || "08-Hrs"}
                           </span>
                           <span className="feature-pill">
-                            <i className="fa-solid fa-car"></i> {tour.vehicle}
+                            <i className="fa-solid fa-car"></i>{" "}
+                            {tour.vehicle || tour.carHours || "4WD Cruiser"}
                           </span>
                           <span className="feature-pill">
                             <i className="fa-solid fa-user-tie"></i>{" "}
-                            {tour.guide}
+                            {tour.guide || "Driver-guide"}
+                          </span>
+                          <span className="feature-pill">
+                            <i className="fa-solid fa-users"></i>{" "}
+                            {tour.capacity || tour.groupSize || "4 Persons"}
                           </span>
                         </div>
                         <div className="item-card-actions">
@@ -2132,29 +2438,123 @@ export default function AdminPanel() {
                   </p>
                 </div>
                 <div className="view-header-actions">
-                  <button
-                    type="button"
-                    className="btn-admin btn-admin-primary"
-                    onClick={() => openAddModal("package")}
-                  >
-                    <i className="fa-solid fa-plus"></i> Add Package
-                  </button>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <span
+                      style={{
+                        fontSize: "12px",
+                        padding: "6px 14px",
+                        borderRadius: "20px",
+                        background: "rgba(245, 158, 11, 0.15)",
+                        color: "#f59e0b",
+                        fontWeight: 700,
+                        border: "1px solid rgba(245, 158, 11, 0.35)",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <i className="fa-solid fa-star"></i>
+                      {(siteData.packages || []).filter((p) => p.featured || p.isFeatured).length} Featured
+                    </span>
+                    <button
+                      type="button"
+                      className="btn-admin btn-admin-primary"
+                      onClick={() => openAddModal("package")}
+                    >
+                      <i className="fa-solid fa-plus"></i> Add Package
+                    </button>
+                  </div>
                 </div>
               </div>
 
               <div className="items-grid">
                 {(siteData.packages || []).map((pkg) => {
                   const id = pkg.id || pkg._id;
+                  const isFeat = Boolean(pkg.featured || pkg.isFeatured);
                   return (
-                    <div className="item-card" key={id}>
+                    <div
+                      className={`item-card ${isFeat ? "package-item-featured" : ""}`}
+                      key={id}
+                      style={{
+                        position: "relative",
+                        borderColor: isFeat ? "#f59e0b" : undefined,
+                        boxShadow: isFeat ? "0 4px 18px rgba(245, 158, 11, 0.2)" : undefined,
+                      }}
+                    >
                       <div className="item-card-image">
                         <img src={pkg.image} alt={pkg.title} />
                         <span className="item-price-tag">{pkg.price}</span>
                         {pkg.badge && (
                           <span className="item-badge-pill">{pkg.badge}</span>
                         )}
+                        {isFeat && (
+                          <span
+                            className="item-featured-tag"
+                            style={{
+                              position: "absolute",
+                              top: "10px",
+                              right: "10px",
+                              background: "linear-gradient(135deg, #f59e0b, #d97706)",
+                              color: "#fff",
+                              fontSize: "11px",
+                              fontWeight: 700,
+                              padding: "4px 10px",
+                              borderRadius: "20px",
+                              boxShadow: "0 4px 10px rgba(0,0,0,0.35)",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              letterSpacing: "0.4px",
+                              textTransform: "uppercase",
+                              zIndex: 3,
+                            }}
+                          >
+                            <i className="fa-solid fa-star"></i> Featured
+                          </span>
+                        )}
                       </div>
                       <div className="item-card-body">
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            marginBottom: "8px",
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: "11px",
+                              textTransform: "uppercase",
+                              fontWeight: 700,
+                              color: "#0284c7",
+                            }}
+                          >
+                            {pkg.category === "umrah"
+                              ? "Hajj & Umrah"
+                              : pkg.category === "flights"
+                              ? "Flights"
+                              : "Holiday Tour"}
+                          </span>
+                          {isFeat ? (
+                            <span
+                              style={{
+                                fontSize: "11px",
+                                color: "#f59e0b",
+                                fontWeight: 700,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                              }}
+                            >
+                              <i className="fa-solid fa-star"></i> Featured Active
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: "11px", color: "#94a3b8" }}>
+                              Standard
+                            </span>
+                          )}
+                        </div>
                         <h4 className="item-card-title">{pkg.title}</h4>
                         <div className="item-card-sub">
                           <i className="fa-regular fa-clock"></i> {pkg.duration}
@@ -2165,11 +2565,20 @@ export default function AdminPanel() {
                             .map((inc, idx) => (
                               <span className="feature-pill" key={idx}>
                                 <i className="fa-solid fa-circle-check text-success"></i>{" "}
-                                {inc}
+                                {typeof inc === "object" ? inc.text : inc}
                               </span>
                             ))}
                         </div>
                         <div className="item-card-actions">
+                          <button
+                            type="button"
+                            className={`btn-card-action ${isFeat ? "btn-feature-active" : "btn-feature-toggle"}`}
+                            onClick={() => handleTogglePackageFeatured(id, !isFeat)}
+                            title={isFeat ? "Click to unmark as featured" : "Click to mark as featured"}
+                          >
+                            <i className={`fa-${isFeat ? "solid" : "regular"} fa-star`}></i>{" "}
+                            {isFeat ? "Featured" : "Feature"}
+                          </button>
                           <button
                             type="button"
                             className="btn-card-action btn-edit"
@@ -3050,8 +3459,29 @@ export default function AdminPanel() {
                     >
                       Cancel
                     </button>
-                    <button type="submit" className="btn-action-save">
-                      <i className="fa-solid fa-check"></i> Save Changes
+                    <button
+                      type="submit"
+                      className="btn-action-save"
+                      disabled={isSavingSettings}
+                      style={{
+                        opacity: isSavingSettings ? 0.75 : 1,
+                        cursor: isSavingSettings ? "not-allowed" : "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      {isSavingSettings ? (
+                        <>
+                          <i className="fa-solid fa-spinner fa-spin"></i>
+                          <span>Saving Settings...</span>
+                        </>
+                      ) : (
+                        <>
+                          <i className="fa-solid fa-check"></i>
+                          <span>Save Changes</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </form>
@@ -3494,49 +3924,53 @@ export default function AdminPanel() {
               {/* DYNAMIC FIELDS: TOUR */}
               {modalCollection === "tour" && (
                 <>
-                  <div className="form-field">
-                    <label>Tour Title</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={modalFormData.title || ""}
-                      placeholder="e.g. East Salalah Mountain & Safari"
-                      onChange={(e) =>
-                        setModalFormData({
-                          ...modalFormData,
-                          title: e.target.value,
-                        })
-                      }
-                      required
-                    />
-                  </div>
-                  <div className="form-field">
-                    <label>Tagline / Highlights</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={modalFormData.tagline || ""}
-                      placeholder="Wadi Darbat, Taqah Castle, Mirbat Harbor"
-                      onChange={(e) =>
-                        setModalFormData({
-                          ...modalFormData,
-                          tagline: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
                   <div className="form-grid-2">
                     <div className="form-field">
-                      <label>Duration</label>
+                      <label>Tour Title</label>
                       <input
                         type="text"
                         className="form-control"
-                        value={modalFormData.duration || ""}
-                        placeholder="Full Day (8 Hours)"
+                        value={modalFormData.title || ""}
+                        placeholder="e.g. Dubai Red Dunes Desert Safari"
+                        onChange={(e) =>
+                          setModalFormData({
+                            ...modalFormData,
+                            title: e.target.value,
+                          })
+                        }
+                        required
+                      />
+                    </div>
+                    <div className="form-field">
+                      <label>Location / Destination</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={modalFormData.location || modalFormData.tagline || ""}
+                        placeholder="Dubai, UAE"
+                        onChange={(e) =>
+                          setModalFormData({
+                            ...modalFormData,
+                            location: e.target.value,
+                            tagline: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div className="form-grid-2">
+                    <div className="form-field">
+                      <label>Duration / Hours</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={modalFormData.duration || modalFormData.hours || ""}
+                        placeholder="08-Hrs or Full Day (8 Hours)"
                         onChange={(e) =>
                           setModalFormData({
                             ...modalFormData,
                             duration: e.target.value,
+                            hours: e.target.value,
                           })
                         }
                       />
@@ -3560,16 +3994,17 @@ export default function AdminPanel() {
                   </div>
                   <div className="form-grid-2">
                     <div className="form-field">
-                      <label>Vehicle Type</label>
+                      <label>Vehicle / Transport</label>
                       <input
                         type="text"
                         className="form-control"
-                        value={modalFormData.vehicle || ""}
-                        placeholder="4WD Land Cruiser"
+                        value={modalFormData.vehicle || modalFormData.carHours || ""}
+                        placeholder="4WD Cruiser"
                         onChange={(e) =>
                           setModalFormData({
                             ...modalFormData,
                             vehicle: e.target.value,
+                            carHours: e.target.value,
                           })
                         }
                       />
@@ -3580,11 +4015,44 @@ export default function AdminPanel() {
                         type="text"
                         className="form-control"
                         value={modalFormData.guide || ""}
-                        placeholder="Licensed Local Guide"
+                        placeholder="Driver-guide"
                         onChange={(e) =>
                           setModalFormData({
                             ...modalFormData,
                             guide: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div className="form-grid-2">
+                    <div className="form-field">
+                      <label>Capacity / Group Size</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={modalFormData.capacity || modalFormData.groupSize || ""}
+                        placeholder="4 Persons"
+                        onChange={(e) =>
+                          setModalFormData({
+                            ...modalFormData,
+                            capacity: e.target.value,
+                            groupSize: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="form-field">
+                      <label>Rating (e.g. 5.0)</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={modalFormData.rating ?? "5.0"}
+                        placeholder="5.0"
+                        onChange={(e) =>
+                          setModalFormData({
+                            ...modalFormData,
+                            rating: e.target.value,
                           })
                         }
                       />
@@ -3688,6 +4156,171 @@ export default function AdminPanel() {
               {/* DYNAMIC FIELDS: PACKAGE */}
               {modalCollection === "package" && (
                 <>
+                  {/* FEATURED OPTION TOGGLE */}
+                  <div
+                    className="package-featured-toggle-box"
+                    style={{
+                      background: modalFormData.featured
+                        ? "linear-gradient(135deg, rgba(245, 158, 11, 0.16), rgba(217, 119, 6, 0.08))"
+                        : "var(--ad-gray-50, #f8fafc)",
+                      border: modalFormData.featured
+                        ? "1.5px solid #f59e0b"
+                        : "1px solid var(--ad-gray-300, #cbd5e1)",
+                      borderRadius: "12px",
+                      padding: "16px 18px",
+                      marginBottom: "18px",
+                      transition: "all 0.3s ease",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "14px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "12px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "42px",
+                            height: "42px",
+                            borderRadius: "10px",
+                            background: modalFormData.featured
+                              ? "linear-gradient(135deg, #f59e0b, #d97706)"
+                              : "var(--ad-gray-200, #e2e8f0)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: modalFormData.featured ? "#fff" : "var(--ad-gray-500, #64748b)",
+                            fontSize: "19px",
+                            boxShadow: modalFormData.featured
+                              ? "0 4px 12px rgba(245, 158, 11, 0.35)"
+                              : "none",
+                            transition: "all 0.3s ease",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <i className="fa-solid fa-star"></i>
+                        </div>
+                        <div>
+                          <div
+                            style={{
+                              fontWeight: 700,
+                              fontSize: "14.5px",
+                              color: "var(--ad-gray-900, #0f172a)",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                            }}
+                          >
+                            Featured Package Option
+                            {modalFormData.featured ? (
+                              <span
+                                style={{
+                                  fontSize: "10.5px",
+                                  padding: "2px 8px",
+                                  borderRadius: "12px",
+                                  background: "#fef3c7",
+                                  color: "#b45309",
+                                  fontWeight: 700,
+                                  textTransform: "uppercase",
+                                  border: "1px solid #fde68a",
+                                }}
+                              >
+                                Featured Active
+                              </span>
+                            ) : (
+                              <span
+                                style={{
+                                  fontSize: "10.5px",
+                                  padding: "2px 8px",
+                                  borderRadius: "12px",
+                                  background: "var(--ad-gray-200, #e2e8f0)",
+                                  color: "var(--ad-gray-600, #475569)",
+                                  fontWeight: 600,
+                                  textTransform: "uppercase",
+                                }}
+                              >
+                                Standard
+                              </span>
+                            )}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: "12px",
+                              color: "var(--ad-gray-500, #64748b)",
+                              marginTop: "2px",
+                            }}
+                          >
+                            Enable this feature option to highlight this package in "Popular Destinations &amp; Featured Packages"
+                          </div>
+                        </div>
+                      </div>
+
+                      <label
+                        style={{
+                          position: "relative",
+                          display: "inline-block",
+                          width: "50px",
+                          height: "26px",
+                          cursor: "pointer",
+                          margin: 0,
+                          flexShrink: 0,
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={Boolean(modalFormData.featured)}
+                          onChange={(e) => {
+                            const val = e.target.checked;
+                            setModalFormData({
+                              ...modalFormData,
+                              featured: val,
+                              isFeatured: val,
+                            });
+                          }}
+                          style={{ opacity: 0, width: 0, height: 0 }}
+                        />
+                        <span
+                          style={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            backgroundColor: modalFormData.featured ? "#f59e0b" : "#cbd5e1",
+                            borderRadius: "34px",
+                            transition: "all 0.3s ease",
+                            boxShadow: modalFormData.featured
+                              ? "0 0 10px rgba(245, 158, 11, 0.5)"
+                              : "none",
+                          }}
+                        >
+                          <span
+                            style={{
+                              position: "absolute",
+                              height: "20px",
+                              width: "20px",
+                              left: modalFormData.featured ? "26px" : "3px",
+                              bottom: "3px",
+                              backgroundColor: "white",
+                              borderRadius: "50%",
+                              transition: "all 0.3s ease",
+                              boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                            }}
+                          />
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+
                   <div className="form-grid-2">
                     <div className="form-field">
                       <label>Package Title</label>
@@ -3706,12 +4339,32 @@ export default function AdminPanel() {
                       />
                     </div>
                     <div className="form-field">
+                      <label>Package Category</label>
+                      <select
+                        className="form-control"
+                        value={modalFormData.category || "tours"}
+                        onChange={(e) =>
+                          setModalFormData({
+                            ...modalFormData,
+                            category: e.target.value,
+                          })
+                        }
+                      >
+                        <option value="tours">Holiday Tours</option>
+                        <option value="umrah">Hajj &amp; Umrah</option>
+                        <option value="flights">International Flights</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="form-grid-2">
+                    <div className="form-field">
                       <label>Badge Pill Text</label>
                       <input
                         type="text"
                         className="form-control"
                         value={modalFormData.badge || ""}
-                        placeholder="5-Star Deluxe"
+                        placeholder="5-Star Deluxe / Best Seller"
                         onChange={(e) =>
                           setModalFormData({
                             ...modalFormData,
@@ -3720,8 +4373,6 @@ export default function AdminPanel() {
                         }
                       />
                     </div>
-                  </div>
-                  <div className="form-grid-2">
                     <div className="form-field">
                       <label>Duration</label>
                       <input
@@ -3737,21 +4388,277 @@ export default function AdminPanel() {
                         }
                       />
                     </div>
-                    <div className="form-field">
-                      <label>Price</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        value={modalFormData.price || ""}
-                        placeholder="$1,299"
-                        onChange={(e) =>
-                          setModalFormData({
-                            ...modalFormData,
-                            price: e.target.value,
+                  </div>
+
+                  <div className="form-field">
+                    <label>Package Starting Price</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={modalFormData.price || ""}
+                      placeholder="$1,299"
+                      onChange={(e) =>
+                        setModalFormData({
+                          ...modalFormData,
+                          price: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                  </div>
+
+                  {/* INCLUSIONS MANUAL SET FACILITY */}
+                  <div
+                    className="package-inclusions-facility"
+                    style={{
+                      background: "var(--ad-gray-50, #f8fafc)",
+                      border: "1.5px solid var(--ad-gray-300, #cbd5e1)",
+                      borderRadius: "14px",
+                      padding: "18px 20px",
+                      marginTop: "16px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "14px",
+                    }}
+                  >
+                    {/* Facility Header */}
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        borderBottom: "1px solid var(--ad-gray-200, #e2e8f0)",
+                        paddingBottom: "10px",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <i className="fa-solid fa-list-check" style={{ fontSize: "16px", color: "#0284c7" }}></i>
+                        <span style={{ fontWeight: 700, fontSize: "14.5px", color: "var(--ad-gray-900, #0f172a)" }}>
+                          Inclusions Management (Manual Set Facility)
+                        </span>
+                        <span
+                          style={{
+                            fontSize: "11px",
+                            padding: "2px 8px",
+                            borderRadius: "12px",
+                            background: "#e0f2fe",
+                            color: "#0369a1",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {(modalFormData.inclusions || []).length} Active
+                        </span>
+                      </div>
+                      {(modalFormData.inclusions || []).length > 0 && (
+                        <button
+                          type="button"
+                          onClick={handleClearAllInclusions}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: "#ef4444",
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            padding: "4px 8px",
+                            borderRadius: "6px",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                          }}
+                        >
+                          <i className="fa-solid fa-trash-can"></i> Clear All
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Active Inclusions Tag Pills */}
+                    <div>
+                      <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--ad-gray-600, #475569)", marginBottom: "8px", display: "block" }}>
+                        Current Package Inclusions:
+                      </label>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: "8px",
+                          minHeight: "40px",
+                          padding: "10px 12px",
+                          background: "#ffffff",
+                          border: "1px dashed var(--ad-gray-300, #cbd5e1)",
+                          borderRadius: "10px",
+                          alignItems: "center",
+                        }}
+                      >
+                        {(modalFormData.inclusions || []).length === 0 ? (
+                          <span style={{ fontSize: "12px", color: "#94a3b8", fontStyle: "italic" }}>
+                            No inclusions added yet. Use single item add, comma-separated field, or quick picks below.
+                          </span>
+                        ) : (
+                          (modalFormData.inclusions || []).map((inc, idx) => {
+                            const text = typeof inc === "object" ? inc.text : inc;
+                            return (
+                              <span
+                                key={idx}
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "6px",
+                                  padding: "6px 12px",
+                                  borderRadius: "20px",
+                                  background: "#f0fdf4",
+                                  border: "1px solid #bbf7d0",
+                                  color: "#166534",
+                                  fontSize: "12.5px",
+                                  fontWeight: 600,
+                                  boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                                }}
+                              >
+                                <i className="fa-solid fa-circle-check" style={{ color: "#22c55e", fontSize: "12px" }}></i>
+                                {text}
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveInclusion(idx)}
+                                  style={{
+                                    background: "none",
+                                    border: "none",
+                                    color: "#dc2626",
+                                    cursor: "pointer",
+                                    padding: "0 2px",
+                                    marginLeft: "4px",
+                                    fontSize: "14px",
+                                    fontWeight: 700,
+                                    lineHeight: 1,
+                                    display: "flex",
+                                    alignItems: "center",
+                                  }}
+                                  title={`Remove "${text}"`}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            );
                           })
-                        }
-                        required
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Manual Single Add Input Bar */}
+                    <div>
+                      <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--ad-gray-600, #475569)", marginBottom: "6px", display: "block" }}>
+                        Manual Add Item (Type &amp; Add):
+                      </label>
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={singleInclusionInput}
+                          placeholder="e.g. 5-Star Hotel or Return Flights"
+                          onChange={(e) => setSingleInclusionInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleAddSingleInclusion();
+                            }
+                          }}
+                          style={{ flex: 1, fontSize: "13px" }}
+                        />
+                        <button
+                          type="button"
+                          className="btn-admin btn-admin-primary"
+                          onClick={handleAddSingleInclusion}
+                          style={{
+                            padding: "8px 18px",
+                            fontSize: "13px",
+                            whiteSpace: "nowrap",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                          }}
+                        >
+                          <i className="fa-solid fa-plus"></i> Add Item
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Comma-Separated Direct Input (Requested: Inclusions Comma-separated) */}
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+                        <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--ad-gray-600, #475569)", margin: 0 }}>
+                          Inclusions (Comma-separated text input)
+                        </label>
+                        <span style={{ fontSize: "11px", color: "#64748b" }}>
+                          Type or paste items separated by commas freely
+                        </span>
+                      </div>
+                      <textarea
+                        className="form-control"
+                        rows={2}
+                        value={inclusionsRawText}
+                        placeholder="5-Star Hotel, Return Flights, Daily Breakfast, VIP Airport Transfers"
+                        onChange={(e) => handleRawInclusionsChange(e.target.value)}
+                        style={{
+                          fontSize: "13px",
+                          lineHeight: "1.4",
+                          resize: "vertical",
+                        }}
                       />
+                    </div>
+
+                    {/* One-Click Quick Presets */}
+                    <div>
+                      <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--ad-gray-600, #475569)", marginBottom: "6px", display: "block" }}>
+                        Quick-Add Popular Inclusions:
+                      </label>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                        {[
+                          "5-Star Hotel",
+                          "Return Flights",
+                          "Daily Breakfast",
+                          "VIP Airport Transfers",
+                          "Guided City Tours",
+                          "Umrah Visa Processing",
+                          "Haram Front View",
+                          "Private GMC Transport",
+                          "4-Star Alpine Lodge",
+                          "Speedboat Cruise",
+                          "Desert Safari Dinner",
+                          "24/7 Concierge Support",
+                        ].map((preset, pIdx) => {
+                          const isAlreadyAdded = (modalFormData.inclusions || [])
+                            .map((i) => (typeof i === "object" ? i.text : i))
+                            .includes(preset);
+                          return (
+                            <button
+                              key={pIdx}
+                              type="button"
+                              onClick={() => handleQuickAddInclusion(preset)}
+                              style={{
+                                padding: "4px 10px",
+                                borderRadius: "14px",
+                                fontSize: "11.5px",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                border: isAlreadyAdded
+                                  ? "1px solid #16a34a"
+                                  : "1px solid var(--ad-gray-300, #cbd5e1)",
+                                background: isAlreadyAdded ? "#dcfce7" : "#ffffff",
+                                color: isAlreadyAdded ? "#15803d" : "var(--ad-gray-700, #334155)",
+                                transition: "all 0.2s ease",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                              }}
+                            >
+                              <i
+                                className={isAlreadyAdded ? "fa-solid fa-check" : "fa-solid fa-plus"}
+                                style={{ fontSize: "10px" }}
+                              ></i>
+                              {preset}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 </>
@@ -3934,8 +4841,34 @@ export default function AdminPanel() {
               >
                 Cancel
               </button>
-              <button type="submit" className="btn-action-save">
-                <i className="fa-solid fa-check"></i> Save Changes
+              <button
+                type="submit"
+                className="btn-action-save"
+                disabled={isSubmittingModal || uploadingImage}
+                style={{
+                  opacity: isSubmittingModal || uploadingImage ? 0.75 : 1,
+                  cursor: isSubmittingModal || uploadingImage ? "not-allowed" : "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                {isSubmittingModal ? (
+                  <>
+                    <i className="fa-solid fa-spinner fa-spin"></i>
+                    <span>Saving...</span>
+                  </>
+                ) : uploadingImage ? (
+                  <>
+                    <i className="fa-solid fa-spinner fa-spin"></i>
+                    <span>Uploading Image...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fa-solid fa-check"></i>
+                    <span>Save Changes</span>
+                  </>
+                )}
               </button>
             </div>
           </form>
@@ -4094,8 +5027,29 @@ export default function AdminPanel() {
               >
                 Cancel
               </button>
-              <button type="submit" className="btn-action-save">
-                <i className="fa-solid fa-check"></i> Save Customer Inquiry
+              <button
+                type="submit"
+                className="btn-action-save"
+                disabled={isSavingEnquiry}
+                style={{
+                  opacity: isSavingEnquiry ? 0.75 : 1,
+                  cursor: isSavingEnquiry ? "not-allowed" : "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                {isSavingEnquiry ? (
+                  <>
+                    <i className="fa-solid fa-spinner fa-spin"></i>
+                    <span>Saving Inquiry...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fa-solid fa-check"></i>
+                    <span>Save Customer Inquiry</span>
+                  </>
+                )}
               </button>
             </div>
           </form>

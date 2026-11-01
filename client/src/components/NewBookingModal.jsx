@@ -23,26 +23,55 @@ export default function NewBookingModal({ isOpen, title, onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    const newEnquiry = {
+      _id: `enq-${Date.now()}`,
+      fullName: formData.name,
+      phone: formData.phone,
+      email: formData.email,
+      message: `${formData.message || ''} | Guests: ${formData.guests} | Date: ${formData.date || 'Flexible'}`.trim(),
+      serviceRequired: title || 'General Enquiry',
+      isRead: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Preserve locally so admin receives it immediately
     try {
-      await api.post('/enquiries', {
-        fullName: formData.name,
-        phone: formData.phone,
-        email: formData.email,
-        message: `${formData.message || ''} | Guests: ${formData.guests} | Date: ${formData.date || 'Flexible'}`.trim(),
-        serviceRequired: title || 'General Enquiry'
-      });
-      setSubmitted(true);
-      toast.success('Enquiry submitted! We\'ll contact you within 15 minutes.');
-      setTimeout(() => {
-        setSubmitted(false);
-        setFormData({ name: '', phone: '', email: '', message: '', guests: '2 Persons', date: '' });
-        onClose();
-      }, 2500);
-    } catch (error) {
-      toast.error('Failed to submit. Please try WhatsApp or call us directly.');
-    } finally {
-      setLoading(false);
+      const stored = JSON.parse(
+        localStorage.getItem("air_dream_enquiries_v2") || "[]",
+      );
+      stored.unshift(newEnquiry);
+      localStorage.setItem("air_dream_enquiries_v2", JSON.stringify(stored));
+      window.dispatchEvent(
+        new CustomEvent("airdream:enquiry_added", { detail: newEnquiry }),
+      );
+      window.dispatchEvent(
+        new CustomEvent("airdream-enquiry-added", { detail: newEnquiry }),
+      );
+    } catch (e) {
+      console.error(e);
     }
+
+    setLoading(false);
+    setSubmitted(true);
+    toast.success('Enquiry submitted! We\'ll contact you within 15 minutes.');
+
+    // Background sync
+    api.post('/enquiries', {
+      fullName: newEnquiry.fullName,
+      phone: newEnquiry.phone,
+      email: newEnquiry.email,
+      message: newEnquiry.message,
+      serviceRequired: newEnquiry.serviceRequired
+    }).catch((err) => {
+      console.warn("Backend sync fallback, preserved locally:", err?.message);
+    });
+
+    setTimeout(() => {
+      setSubmitted(false);
+      setFormData({ name: '', phone: '', email: '', message: '', guests: '2 Persons', date: '' });
+      onClose();
+    }, 2000);
   };
 
   return (

@@ -14,6 +14,7 @@ const DEFAULT_PACKAGES = [
     ratingCategory: 'Holiday Escape',
     rating: 4.9,
     reviews: 128,
+    featured: true,
     inclusions: [
       { icon: 'fa-hotel', text: '5-Star Hotel' },
       { icon: 'fa-car', text: 'VIP Transfers' },
@@ -32,6 +33,7 @@ const DEFAULT_PACKAGES = [
     ratingCategory: 'Hajj & Umrah',
     rating: 5.0,
     reviews: 340,
+    featured: true,
     inclusions: [
       { icon: 'fa-plane', text: 'Return Flights' },
       { icon: 'fa-hotel', text: 'Clock Tower Hotel' },
@@ -50,6 +52,7 @@ const DEFAULT_PACKAGES = [
     ratingCategory: 'Tropical Holiday',
     rating: 4.8,
     reviews: 95,
+    featured: false,
     inclusions: [
       { icon: 'fa-house-chimney-window', text: 'Pool Villa' },
       { icon: 'fa-ship', text: 'Speedboat Cruise' },
@@ -68,6 +71,7 @@ const DEFAULT_PACKAGES = [
     ratingCategory: 'International Air',
     rating: 4.9,
     reviews: 210,
+    featured: false,
     inclusions: [
       { icon: 'fa-plane-departure', text: 'Direct Emirates' },
       { icon: 'fa-suitcase', text: '2x 23kg Luggage' },
@@ -86,6 +90,7 @@ const DEFAULT_PACKAGES = [
     ratingCategory: 'Scenic Escapes',
     rating: 4.9,
     reviews: 112,
+    featured: true,
     inclusions: [
       { icon: 'fa-train-subway', text: 'Glacier Express' },
       { icon: 'fa-hotel', text: '4-Star Alpine Lodge' },
@@ -100,22 +105,81 @@ const DEFAULT_PACKAGES = [
     image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=800&q=80',
     badge: 'Special Fare',
     badgeClass: 'gold',
-    duration: '1 Stop &bull; Fast Transit',
+    duration: '1 Stop • Fast Transit',
     ratingCategory: 'International Air',
     rating: 4.8,
     reviews: 84,
+    featured: false,
     inclusions: [
       { icon: 'fa-plane', text: 'Etihad Airways' },
       { icon: 'fa-tv', text: 'Full Entertainment' },
       { icon: 'fa-clock', text: 'Flexible Dates' }
     ],
     price: '$790'
+  },
+  {
+    id: 7,
+    category: 'tours',
+    title: 'Istanbul & Cappadocia Cave Suites Hot Air Balloon',
+    image: 'https://images.unsplash.com/photo-1527838832700-5059252407fa?auto=format&fit=crop&w=800&q=80',
+    badge: 'Hot Deal',
+    badgeClass: 'gold',
+    duration: '6 Days / 5 Nights',
+    ratingCategory: 'Historical Escapes',
+    rating: 4.95,
+    reviews: 168,
+    featured: true,
+    inclusions: [
+      { icon: 'fa-hotel', text: 'Cave Hotel' },
+      { icon: 'fa-plane', text: 'Hot Air Balloon' },
+      { icon: 'fa-utensils', text: 'Turkish Breakfast' }
+    ],
+    price: '$920'
+  },
+  {
+    id: 8,
+    category: 'umrah',
+    title: 'Deluxe Madinah & Makkah 14-Day Spiritual Journey',
+    image: 'https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=800&q=80',
+    badge: 'All Inclusive VIP',
+    badgeClass: '',
+    duration: '14 Days / 13 Nights',
+    ratingCategory: 'Hajj & Umrah',
+    rating: 5.0,
+    reviews: 295,
+    featured: true,
+    inclusions: [
+      { icon: 'fa-plane', text: 'Direct Saudi Airlines' },
+      { icon: 'fa-hotel', text: 'Haram Front View' },
+      { icon: 'fa-car', text: 'Private GMC Transport' }
+    ],
+    price: '$1,590'
+  },
+  {
+    id: 9,
+    category: 'flights',
+    title: 'Nonstop Dubai to Singapore Changi (Singapore Airlines)',
+    image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=800&q=80',
+    badge: 'Direct Flight',
+    badgeClass: 'gold',
+    duration: 'Direct • 7h 20m',
+    ratingCategory: 'International Air',
+    rating: 4.9,
+    reviews: 142,
+    featured: false,
+    inclusions: [
+      { icon: 'fa-plane', text: 'Singapore Airlines' },
+      { icon: 'fa-suitcase', text: '30kg Luggage' },
+      { icon: 'fa-utensils', text: 'World-Class Catering' }
+    ],
+    price: '$640'
   }
 ];
 
 export default function PackagesSection({ onBookPackage }) {
   const { siteData } = useSiteData();
   const [activeFilter, setActiveFilter] = useState('all');
+  const [showAll, setShowAll] = useState(false);
   const [packages, setPackages] = useState(() => {
     if (siteData?.packages && siteData.packages.length > 0) {
       return siteData.packages;
@@ -147,27 +211,47 @@ export default function PackagesSection({ onBookPackage }) {
     if (Array.isArray(item.inclusions) && item.inclusions.length > 0) {
       inclusionsList = item.inclusions.map((inc) => {
         if (typeof inc === 'string') {
-          return { icon: 'fa-check', text: inc };
+          const lower = inc.toLowerCase();
+          let icon = 'fa-circle-check';
+          if (lower.includes('hotel') || lower.includes('resort') || lower.includes('villa') || lower.includes('lodge') || lower.includes('room') || lower.includes('haram')) icon = 'fa-hotel';
+          else if (lower.includes('flight') || lower.includes('plane') || lower.includes('air') || lower.includes('emirates') || lower.includes('saudi')) icon = 'fa-plane';
+          else if (lower.includes('transfer') || lower.includes('car') || lower.includes('chauffeur') || lower.includes('pickup') || lower.includes('gmc')) icon = 'fa-car';
+          else if (lower.includes('breakfast') || lower.includes('dining') || lower.includes('meal') || lower.includes('dinner') || lower.includes('food') || lower.includes('catering')) icon = 'fa-utensils';
+          else if (lower.includes('visa') || lower.includes('passport')) icon = 'fa-passport';
+          else if (lower.includes('train') || lower.includes('express')) icon = 'fa-train-subway';
+          else if (lower.includes('cruise') || lower.includes('boat') || lower.includes('ship')) icon = 'fa-ship';
+          else if (lower.includes('guide') || lower.includes('tour') || lower.includes('safari') || lower.includes('balloon') || lower.includes('ziyarat') || lower.includes('excursion')) icon = 'fa-certificate';
+          else if (lower.includes('spa') || lower.includes('bath')) icon = 'fa-spa';
+          else if (lower.includes('luggage') || lower.includes('bag')) icon = 'fa-suitcase';
+          else if (lower.includes('wifi')) icon = 'fa-wifi';
+          return { icon, text: inc };
         }
         return inc;
       });
     }
+
+    const isFeatured =
+      item.featured === true ||
+      item.isFeatured === true ||
+      item.featured === 'true' ||
+      item.isFeatured === 'true';
 
     return {
       id: item.id || item._id || idx,
       category: normalizedCategory,
       title: item.title,
       image: item.image || (item.images && item.images[0]) || DEFAULT_PACKAGES[idx % DEFAULT_PACKAGES.length].image,
-      badge: item.badge || 'Best Seller',
-      badgeClass: 'gold',
+      badge: item.badge || (isFeatured ? 'Featured Package' : 'Best Seller'),
+      badgeClass: isFeatured ? 'gold' : (item.badgeClass || 'gold'),
       duration: durationText,
-      ratingCategory: item.tag || 'Holiday Escape',
+      ratingCategory: item.tag || (isFeatured ? 'Featured Deal' : 'Holiday Escape'),
       rating: item.rating || 4.9,
       reviews: item.reviews || (50 + idx * 12),
       inclusions: inclusionsList,
       price: item.price
         ? (typeof item.price === 'string' ? (item.price.includes('$') ? item.price : `$${item.price}`) : `$${item.price}`)
-        : '$649'
+        : '$649',
+      featured: isFeatured
     };
   };
 
@@ -212,10 +296,18 @@ export default function PackagesSection({ onBookPackage }) {
     };
   }, []);
 
+  const handleFilterChange = (filter) => {
+    setActiveFilter(filter);
+    setShowAll(false);
+  };
+
   const filtered =
     activeFilter === 'all'
       ? packages
       : packages.filter((p) => p.category === activeFilter);
+
+  // Requirement: only show 6 cards initially; other cards show on clicking See More
+  const displayedPackages = showAll ? filtered : filtered.slice(0, 6);
 
   return (
     <section className="section-padding packages-section" id="packages">
@@ -238,28 +330,28 @@ export default function PackagesSection({ onBookPackage }) {
           <button
             type="button"
             className={`filter-pill-btn ${activeFilter === 'all' ? 'active' : ''}`}
-            onClick={() => setActiveFilter('all')}
+            onClick={() => handleFilterChange('all')}
           >
             All Packages
           </button>
           <button
             type="button"
             className={`filter-pill-btn ${activeFilter === 'umrah' ? 'active' : ''}`}
-            onClick={() => setActiveFilter('umrah')}
+            onClick={() => handleFilterChange('umrah')}
           >
             Hajj &amp; Umrah
           </button>
           <button
             type="button"
             className={`filter-pill-btn ${activeFilter === 'tours' ? 'active' : ''}`}
-            onClick={() => setActiveFilter('tours')}
+            onClick={() => handleFilterChange('tours')}
           >
             Holiday Tours
           </button>
           <button
             type="button"
             className={`filter-pill-btn ${activeFilter === 'flights' ? 'active' : ''}`}
-            onClick={() => setActiveFilter('flights')}
+            onClick={() => handleFilterChange('flights')}
           >
             International Flights
           </button>
@@ -273,7 +365,7 @@ export default function PackagesSection({ onBookPackage }) {
             gap: '24px'
           }}
         >
-          {filtered.map((pkg) => (
+          {displayedPackages.map((pkg) => (
             <article key={pkg.id} className="package-card" style={{ flex: 'unset' }}>
               <div className="package-image-holder">
                 <img
@@ -283,6 +375,11 @@ export default function PackagesSection({ onBookPackage }) {
                   loading="lazy"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
+                {pkg.featured && (
+                  <span className="package-featured-flag">
+                    <i className="fa-solid fa-star"></i> Featured
+                  </span>
+                )}
                 {pkg.badge && (
                   <span className={`package-badge-tag ${pkg.badgeClass || ''}`}>
                     {pkg.badge}
@@ -341,6 +438,25 @@ export default function PackagesSection({ onBookPackage }) {
             </article>
           ))}
         </div>
+
+        {/* See More Button: Shown when more than 6 cards exist in current view */}
+        {filtered.length > 6 && (
+          <div className="packages-see-more-wrap">
+            <button
+              type="button"
+              className="btn-see-more-packages"
+              onClick={() => setShowAll((prev) => !prev)}
+              id="btn-packages-see-more"
+            >
+              <span>
+                {showAll
+                  ? 'Show Less Packages'
+                  : `See More Packages (${filtered.length - 6} more)`}
+              </span>
+              <i className={`fa-solid ${showAll ? 'fa-chevron-up' : 'fa-chevron-down'}`}></i>
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );

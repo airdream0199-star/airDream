@@ -695,6 +695,32 @@
   background: #fecaca;
 }
 
+.btn-feature-active {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a !important;
+}
+.btn-feature-active:hover {
+  background: #fde68a;
+  color: #78350f;
+}
+
+.btn-feature-toggle {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0 !important;
+}
+.btn-feature-toggle:hover {
+  background: #fef3c7;
+  color: #b45309;
+  border-color: #fde68a !important;
+}
+
+.package-item-featured {
+  border-color: #f59e0b !important;
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.22) !important;
+}
+
 /* ==========================================================================
    WALLPAPERS (SLIDERS) LIST
    ========================================================================== */
@@ -1255,6 +1281,7 @@ textarea.form-control {
   color: #FFFFFF;
   letter-spacing: -0.4px;
   line-height: 1.05;
+  text-transform: uppercase;
 }
 
 .sidebar-brand-logo-wrap .air-dream-brand-sub,
@@ -1329,6 +1356,7 @@ textarea.form-control {
   font-weight: 900;
   line-height: 1.05;
   letter-spacing: -0.4px;
+  text-transform: uppercase;
 }
 
 .admin-login-brand .air-dream-brand-sub,

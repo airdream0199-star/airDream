@@ -36,22 +36,7 @@ export default function BookingModal({ isOpen, title, price, onClose }) {
       createdAt: new Date().toISOString(),
     };
 
-    try {
-      await api.post("/enquiries", {
-        fullName: newEnquiry.fullName,
-        email: newEnquiry.email,
-        phone: newEnquiry.phone,
-        serviceRequired: newEnquiry.serviceRequired,
-        message: newEnquiry.message,
-      });
-    } catch (apiErr) {
-      console.warn(
-        "Backend API offline or unreachable, saving enquiry locally:",
-        apiErr,
-      );
-    }
-
-    // Always preserve locally so admin can see inquiries
+    // Always preserve locally immediately so admin receives inquiry with zero lag
     try {
       const stored = JSON.parse(
         localStorage.getItem("air_dream_enquiries_v2") || "[]",
@@ -73,6 +58,20 @@ export default function BookingModal({ isOpen, title, price, onClose }) {
     toast.success(
       "Booking request received! Our concierge will contact you shortly.",
     );
+
+    // Non-blocking background API sync
+    api.post("/enquiries", {
+      fullName: newEnquiry.fullName,
+      email: newEnquiry.email,
+      phone: newEnquiry.phone,
+      serviceRequired: newEnquiry.serviceRequired,
+      message: newEnquiry.message,
+    }).catch((apiErr) => {
+      console.warn(
+        "Backend API offline or unreachable, saved enquiry locally:",
+        apiErr?.message,
+      );
+    });
 
     setTimeout(() => {
       setSubmitted(false);

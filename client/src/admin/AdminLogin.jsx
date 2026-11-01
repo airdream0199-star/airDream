@@ -51,19 +51,21 @@ export default function AdminLogin() {
         {/* Brand Header */}
         <div className="admin-login-brand">
           <img
-            src="/assets/air-dream-badge.svg"
-            alt="Air Dream Logo"
+            src="/assets/air-dream-logo.png"
+            alt="AIR DREAM Logo"
             className="admin-navbar-logo"
             id="loginBrandLogo"
             onError={(e) => {
               e.target.onerror = null;
-              e.target.src = "/image/logo.png";
+              e.target.src = "/assets/air-dream-logo.png";
             }}
           />
           <div className="air-dream-brand-text">
-            <span className="air-dream-brand-name">Air Dream</span>
-            <span className="air-dream-brand-sub">TRAVEL TOURISM</span>
-            <span className="air-dream-brand-llc">LLC</span>
+            <span className="air-dream-brand-name">AIR DREAM</span>
+            <div className="air-dream-brand-sub-wrap">
+              <span className="air-dream-brand-sub">TRAVEL TOURISM</span>
+              <span className="air-dream-brand-llc">LLC</span>
+            </div>
           </div>
         </div>
 

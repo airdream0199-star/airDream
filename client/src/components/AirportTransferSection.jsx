@@ -7,43 +7,43 @@ import api from '../utils/api';
 const DEFAULT_VEHICLES = [
   {
     id: 'tr-1',
-    title: 'Toyota Land Cruiser – 4WD SUV',
+    title: 'Toyota Hyryder – Urban SUV',
     passengers: 4,
-    luggage: 4,
-    price: '$65',
-    image: '/assets/vehicles/toyota-land-cruiser.svg'
+    luggage: 3,
+    price: '$50',
+    image: '/assets/vehicles/toyota-hyryder.jpg'
   },
   {
     id: 'tr-2',
-    title: 'Toyota Prado – Premium SUV',
-    passengers: 4,
-    luggage: 3,
-    price: '$55',
-    image: '/assets/vehicles/toyota-prado.svg'
+    title: 'Toyota Fortuner – 4WD SUV',
+    passengers: 6,
+    luggage: 4,
+    price: '$65',
+    image: '/assets/vehicles/toyota-fortuner.jpg'
   },
   {
     id: 'tr-3',
-    title: 'Nissan Altima – Sedan Car',
-    passengers: 3,
-    luggage: 3,
-    price: '$45',
-    image: '/assets/vehicles/nissan-altima.svg'
+    title: 'Toyota Land Cruiser – VIP 4WD SUV',
+    passengers: 6,
+    luggage: 5,
+    price: '$85',
+    image: '/assets/vehicles/toyota-land-cruiser.jpg'
   },
   {
     id: 'tr-4',
-    title: 'Toyota Land Cruiser – 4WD SUV',
-    passengers: 4,
-    luggage: 4,
-    price: '$65',
-    image: '/assets/vehicles/toyota-land-cruiser.svg'
+    title: 'Toyota Alphard – Luxury VIP Van',
+    passengers: 7,
+    luggage: 6,
+    price: '$110',
+    image: '/assets/vehicles/toyota-alphard-vip.jpg'
   },
   {
     id: 'tr-5',
-    title: 'Mercedes V-Class – VIP Chauffeur Van',
-    passengers: 7,
-    luggage: 7,
-    price: '$120',
-    image: '/assets/vehicles/mercedes-v-class.svg'
+    title: 'Toyota Corolla – Chauffeur Sedan',
+    passengers: 4,
+    luggage: 3,
+    price: '$40',
+    image: '/assets/vehicles/toyota-corolla.jpg'
   }
 ];
 

@@ -6,64 +6,76 @@ import { useSiteData } from '../context/SiteDataContext';
 
 const DEFAULT_TOURS = [
   {
-    id: 1,
-    title: 'Sunset Desert Safari with Barbecue Dinner at bedouin tent',
-    location: 'Dubai Desert',
+    id: 'tour-1',
+    title: 'Sunset Desert Safari & BBQ Dinner at Bedouin Camp',
+    location: 'Dubai Desert, UAE',
     rating: '5.0',
-    hours: '10-Hrs',
-    carHours: '10-Hrs',
+    hours: '06-Hrs',
+    carHours: '4WD Cruiser',
     guide: 'Driver-guide',
-    capacity: '3',
+    capacity: '6 Persons',
     price: '$120',
-    image: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=700&q=80'
+    image: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=800&q=80'
   },
   {
-    id: 2,
-    title: 'Private Custom Made Full Day tour By 4WD',
+    id: 'tour-2',
+    title: 'Private Dubai City & Modern Wonders 4WD Tour',
     location: 'Dubai & Beyond',
-    rating: '5.0',
+    rating: '4.9',
     hours: '08-Hrs',
-    carHours: '08-Hrs',
-    guide: 'Driver-guide',
-    capacity: '3',
-    price: '$450',
-    image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=700&q=80'
+    carHours: 'VIP Luxury 4WD',
+    guide: 'Private Guide',
+    capacity: '4 Persons',
+    price: '$290',
+    image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80'
   },
   {
-    id: 3,
+    id: 'tour-3',
     title: 'East Salalah Mountain Safari & Waterfalls',
     location: 'Salalah / Oman',
     rating: '5.0',
     hours: '08-Hrs',
-    carHours: '08-Hrs',
+    carHours: '4WD Cruiser',
     guide: 'Driver-guide',
-    capacity: '3',
-    price: '$80',
-    image: 'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=700&q=80'
+    capacity: '4 Persons',
+    price: '$85',
+    image: 'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=800&q=80'
   },
   {
-    id: 4,
+    id: 'tour-4',
     title: 'Coastal Dolphin Watching & Snorkeling Cruise',
-    location: 'Dubai Marina',
-    rating: '5.0',
+    location: 'Dubai Marina & Coast',
+    rating: '4.9',
     hours: '04-Hrs',
-    carHours: '04-Hrs',
-    guide: 'Driver-guide',
-    capacity: '4',
+    carHours: 'Luxury Yacht',
+    guide: 'Marine Captain',
+    capacity: '8 Persons',
     price: '$65',
-    image: 'https://images.unsplash.com/photo-1570481662006-a3a1374699e8?auto=format&fit=crop&w=700&q=80'
+    image: 'https://images.unsplash.com/photo-1570481662006-a3a1374699e8?auto=format&fit=crop&w=800&q=80'
   },
   {
-    id: 5,
-    title: 'Beach & Blowholes Coastal Exploration Tour',
-    location: 'Dubai Coast',
+    id: 'tour-5',
+    title: 'Abu Dhabi Grand Mosque & Louvre Palace Tour',
+    location: 'Abu Dhabi, UAE',
     rating: '5.0',
-    hours: '06-Hrs',
-    carHours: '06-Hrs',
-    guide: 'Driver-guide',
-    capacity: '3',
-    price: '$95',
-    image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=700&q=80'
+    hours: '09-Hrs',
+    carHours: 'Executive SUV',
+    guide: 'Certified Guide',
+    capacity: '5 Persons',
+    price: '$150',
+    image: 'https://images.unsplash.com/photo-1512632570417-a6032a6f446f?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'tour-6',
+    title: 'Hatta Mountain Heritage & Kayaking Tour',
+    location: 'Hatta & Al Hajar',
+    rating: '4.9',
+    hours: '07-Hrs',
+    carHours: '4WD Off-Roader',
+    guide: 'Mountain Guide',
+    capacity: '4 Persons',
+    price: '$110',
+    image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80'
   }
 ];
 
@@ -84,14 +96,14 @@ export default function ToursSection({ onBookTour }) {
   } = useAutoManualScroll({ speed: 1.0, cardWidth: 336, setsCount: 4 });
 
   const mapTour = (item, idx) => ({
-    id: item.id || item._id || idx,
+    id: item.id || item._id || `tour-${idx}`,
     title: item.title,
     location: item.location || item.tagline || 'Dubai, UAE',
     rating: item.rating ? `${item.rating}` : '5.0',
-    hours: item.duration || '08-Hrs',
-    carHours: item.vehicle || item.transport || '4WD Cruiser',
+    hours: item.duration || item.hours || '08-Hrs',
+    carHours: item.vehicle || item.carHours || '4WD Cruiser',
     guide: item.guide || 'Driver-guide',
-    capacity: item.capacity || item.groupSize || '4',
+    capacity: item.capacity || item.groupSize || '4 Persons',
     price: item.price
       ? (typeof item.price === 'string' ? item.price : `$${item.price}`)
       : DEFAULT_TOURS[idx % DEFAULT_TOURS.length].price,
@@ -208,9 +220,14 @@ export default function ToursSection({ onBookTour }) {
   return (
     <section className="tours-trips-section" id="tours">
       <div className="container">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
-          <div className="section-badge-center" style={{ margin: 0 }}>
-            <span className="pill-badge-outline">Tour - Trips</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
+          <div>
+            <div className="section-badge-center" style={{ margin: 0, justifyContent: 'flex-start' }}>
+              <span className="pill-badge-outline">Attractions - Ticket</span>
+            </div>
+            <h2 className="section-title" style={{ fontSize: 'clamp(1.6rem, 2.5vw, 2.3rem)', margin: '8px 0 0', fontWeight: 800, color: '#0A1F44' }}>
+              Featured Tour Packages
+            </h2>
           </div>
           <ScrollControlBar
             onPrev={scrollPrev}

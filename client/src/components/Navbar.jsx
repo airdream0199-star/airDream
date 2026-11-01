@@ -13,9 +13,11 @@ export default function Navbar({ onOpenQuote }) {
   const phone = settings.phone || "+971 58 833 8927";
   const whatsapp = settings.whatsapp || "971588338927";
   const email = settings.email || "info@airdreamtravel.com";
-  const brandName = settings.brandName || "Air Dream";
+  const brandName = "AIR DREAM";
   const brandTagline = settings.brandTagline || "TRAVEL TOURISM LLC";
-  const logoUrl = settings.logoUrl || "/assets/air-dream-badge.svg";
+  const logoUrl = (settings.logoUrl && !settings.logoUrl.includes('badge.svg'))
+    ? settings.logoUrl
+    : "/assets/air-dream-logo.png";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -131,21 +133,23 @@ export default function Navbar({ onOpenQuote }) {
             to="/"
             onClick={(e) => handleNavClick(e, "#hero")}
             className="brand-logo-link air-dream-brand"
-            aria-label="Air Dream Travel Tourism LLC Home"
+            aria-label="AIR DREAM Travel Tourism LLC Home"
           >
             <img
               src={logoUrl}
-              alt="Air Dream Logo"
+              alt="AIR DREAM Logo"
               className="air-dream-header-badge"
               onError={(e) => {
                 e.target.onerror = null;
-                e.target.src = "/assets/air-dream-badge.svg";
+                e.target.src = "/assets/air-dream-logo.png";
               }}
             />
             <div className="air-dream-brand-text">
-              <span className="air-dream-brand-name">Air Dream</span>
-              <span className="air-dream-brand-sub">TRAVEL TOURISM</span>
-              <span className="air-dream-brand-llc">LLC</span>
+              <span className="air-dream-brand-name" style={{ fontSize: "1.3rem" }}>AIR DREAM</span>
+              <div className="air-dream-brand-sub-wrap">
+                <span className="air-dream-brand-sub" style={{ fontSize: "0.7rem" }}>TRAVEL TOURISM</span>
+                <span className="air-dream-brand-llc" style={{ fontSize: "0.7rem" }}>LLC</span>
+              </div>
             </div>
           </Link>
 
@@ -232,16 +236,6 @@ export default function Navbar({ onOpenQuote }) {
               <i className="fa-solid fa-sliders"></i>
               <span>Admin</span>
             </Link>
-
-            <a
-              href="https://wa.me/971588338927"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="header-green-whatsapp-btn"
-              title="Chat on WhatsApp"
-            >
-              <i className="fa-brands fa-whatsapp"></i>
-            </a>
 
             <button
               type="button"
@@ -338,6 +332,14 @@ export default function Navbar({ onOpenQuote }) {
               </a>
             </div>
             <div className="borderlink-menu-actions">
+              <Link
+                to="/admin"
+                onClick={closeMenu}
+                className="btn-borderlink-login"
+                style={{ textAlign: "center", textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
+              >
+                <i className="fa-solid fa-sliders"></i> Admin
+              </Link>
               <a
                 href="https://wa.me/971588338927"
                 target="_blank"

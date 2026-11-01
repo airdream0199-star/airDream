@@ -62,7 +62,7 @@ export default function NewAttractionsSection({ onBookAttraction }) {
           <div className="section-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#E0F2FE', color: '#0369A1', padding: '4px 14px', borderRadius: '999px', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px' }}>
             <i className="fa-solid fa-star text-gold"></i> Must-Visit Landmarks
           </div>
-          <h2 className="attractions-title">Top Dubai Attractions</h2>
+          <h2 className="attractions-title">Recommended Attractions</h2>
           <p className="attractions-subtitle">
             Explore iconic landmarks &amp; unforgettable experiences in Dubai &bull; Auto-scrolling &bull; Hover to pause &bull; Click to book
           </p>

@@ -46,22 +46,7 @@ export default function QuoteModal({ isOpen, initialTitle, onClose }) {
       createdAt: new Date().toISOString(),
     };
 
-    try {
-      await api.post("/enquiries", {
-        fullName: newEnquiry.fullName,
-        email: newEnquiry.email,
-        phone: newEnquiry.phone,
-        serviceRequired: newEnquiry.serviceRequired,
-        message: newEnquiry.message,
-      });
-    } catch (apiErr) {
-      console.warn(
-        "Backend API offline or unreachable, saving quote locally:",
-        apiErr,
-      );
-    }
-
-    // Always preserve locally so admin can see inquiries
+    // Always preserve locally immediately so admin receives quote with zero lag
     try {
       const stored = JSON.parse(
         localStorage.getItem("air_dream_enquiries_v2") || "[]",
@@ -83,6 +68,20 @@ export default function QuoteModal({ isOpen, initialTitle, onClose }) {
     toast.success(
       "Quote request sent! We will prepare a personalized itinerary for you.",
     );
+
+    // Non-blocking background API sync
+    api.post("/enquiries", {
+      fullName: newEnquiry.fullName,
+      email: newEnquiry.email,
+      phone: newEnquiry.phone,
+      serviceRequired: newEnquiry.serviceRequired,
+      message: newEnquiry.message,
+    }).catch((apiErr) => {
+      console.warn(
+        "Backend API offline or unreachable, saved quote locally:",
+        apiErr?.message,
+      );
+    });
 
     setTimeout(() => {
       setSubmitted(false);

@@ -1,17 +1,28 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useState } from 'react';
 
 /**
- * High-performance, always-active Auto-Scroll hook with manual arrow navigation
+ * High-performance Auto/Manual scroll hook with manual toggle, arrow navigation
  * and smooth touch/mouse drag support for infinite carousels.
  */
 export function useAutoManualScroll({ speed = 1.0, cardWidth = 320, setsCount = 4 } = {}) {
   const containerRef = useRef(null);
+  const [isAuto, setIsAuto] = useState(true);
+  const isAutoRef = useRef(true);
   const isPausedRef = useRef(false);
   const isDraggingRef = useRef(false);
   const dragStartX = useRef(0);
   const scrollStartX = useRef(0);
   const hasDraggedRef = useRef(false);
   const resumeTimeoutRef = useRef(null);
+
+  const toggleAuto = useCallback(() => {
+    setIsAuto((prev) => {
+      const next = !prev;
+      isAutoRef.current = next;
+      isPausedRef.current = !next;
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -25,7 +36,7 @@ export function useAutoManualScroll({ speed = 1.0, cardWidth = 320, setsCount = 
       const delta = Math.min(time - lastTime, 50); // Cap delta to avoid jumps when switching tabs
       lastTime = time;
 
-      if (!isPausedRef.current && !isDraggingRef.current) {
+      if (isAutoRef.current && !isPausedRef.current && !isDraggingRef.current) {
         // Width of one complete set of cards
         const oneSetWidth = container.scrollWidth / setsCount;
 
@@ -51,10 +62,13 @@ export function useAutoManualScroll({ speed = 1.0, cardWidth = 320, setsCount = 
   }, [speed, setsCount]);
 
   const pauseTemporarily = useCallback((ms = 3500) => {
+    if (!isAutoRef.current) return;
     isPausedRef.current = true;
     if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
     resumeTimeoutRef.current = setTimeout(() => {
-      isPausedRef.current = false;
+      if (isAutoRef.current) {
+        isPausedRef.current = false;
+      }
     }, ms);
   }, []);
 
@@ -119,6 +133,8 @@ export function useAutoManualScroll({ speed = 1.0, cardWidth = 320, setsCount = 
 
   return {
     containerRef,
+    isAuto,
+    toggleAuto,
     scrollPrev,
     scrollNext,
     hasDragged: () => hasDraggedRef.current,

@@ -5,18 +5,24 @@ const travelDealSchema = new mongoose.Schema({
   price: { type: String, required: true },
   badge: { type: String },
   badgeColor: { type: String, default: 'bg-red-500' },
-  image: { type: String, required: true },
+  image: { type: String, default: '' },
   description: { type: String },
+  category: { type: String, default: 'tours' },
+  featured: { type: Boolean, default: false },
+  isFeatured: { type: Boolean, default: false },
   activities: [{ type: String }],
   duration: {
-    days: { type: Number, default: 1 },
-    nights: { type: Number, default: 0 }
+    type: mongoose.Schema.Types.Mixed,
+    default: '5 Days / 4 Nights'
   },
   included: [{ type: String }],
+  inclusions: [{ type: String }],
   active: { type: Boolean, default: true },
   order: { type: Number, default: 0 }
 }, {
-  timestamps: true
+  timestamps: true,
+  strict: false
 });
 
 module.exports = mongoose.model('TravelDeal', travelDealSchema);
+

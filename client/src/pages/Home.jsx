@@ -50,14 +50,14 @@ export default function Home() {
         {/* 3. Why Choose Air Dream Travel & Tourism? (3D Flip/Open Cards) */}
         <SingleLineCards onBookTrip={handleBookItem} />
 
-        {/* 4. Top Dubai Attractions Marquee */}
+        {/* 4. Tour Packages (Auto/Manual Scroll Carousel with 6+ Cards) */}
+        <ToursSection onBookTour={handleBookItem} />
+
+        {/* 5. Recommended Attractions Marquee */}
         <AttractionsSection onBookAttraction={handleBookItem} />
 
-        {/* 5. About Us (Arched Visual Composition with Overlapping Bubble Badges) */}
+        {/* 6. About Us (Arched Visual Composition with Overlapping Bubble Badges) */}
         <AboutSection onOpenQuote={handleOpenQuote} />
-
-        {/* 6. Tour - Trips Marquee */}
-        <ToursSection onBookTour={handleBookItem} />
 
         {/* 7. Airport Transfer Marquee */}
         <AirportTransferSection onBookTransfer={handleBookItem} />

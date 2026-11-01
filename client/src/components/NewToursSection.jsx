@@ -77,7 +77,7 @@ export default function NewToursSection({ onBookTour }) {
     <section className="tours-trips-section" id="tours">
       <div className="container">
         <div className="section-badge-center">
-          <span className="pill-badge-outline">Tour - Trips</span>
+          <span className="pill-badge-outline">Attractions - Ticket</span>
         </div>
       </div>
 

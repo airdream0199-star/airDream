@@ -9,9 +9,11 @@ export default function Footer({ onOpenQuote }) {
   const whatsapp = settings.whatsapp || '971588338927';
   const email = settings.email || 'info@airdreamtravel.com';
   const address = settings.address || 'Suite 408, Al Barsha Horizon Tower, Sheikh Zayed Road, Dubai, UAE';
-  const brandName = settings.brandName || 'Air Dream';
+  const brandName = "AIR DREAM";
   const brandTagline = settings.brandTagline || 'TRAVEL TOURISM LLC';
-  const logoUrl = settings.logoUrl || '/assets/air-dream-badge.svg';
+  const logoUrl = (settings.logoUrl && !settings.logoUrl.includes('badge.svg'))
+    ? settings.logoUrl
+    : '/assets/air-dream-logo.png';
 
   const scrollTo = (e, id) => {
     e.preventDefault();
@@ -55,7 +57,7 @@ export default function Footer({ onOpenQuote }) {
                 alt={`${brandName} Logo`}
                 onError={(e) => {
                   e.target.onerror = null;
-                  e.target.src = '/assets/air-dream-badge.svg';
+                  e.target.src = '/assets/air-dream-logo.png';
                 }}
                 style={{
                   height: '52px',
@@ -73,10 +75,11 @@ export default function Footer({ onOpenQuote }) {
                     fontWeight: 900,
                     fontSize: '1.45rem',
                     letterSpacing: '-0.4px',
-                    lineHeight: 1.05
+                    lineHeight: 1.05,
+                    textTransform: 'uppercase'
                   }}
                 >
-                  Air Dream
+                  AIR DREAM
                 </span>
                 <span
                   style={{

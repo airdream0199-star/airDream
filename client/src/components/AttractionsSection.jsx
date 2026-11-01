@@ -202,7 +202,7 @@ export default function AttractionsSection({ onBookAttraction }) {
             >
               <i className="fa-solid fa-star text-gold"></i> Must-Visit Landmarks
             </div>
-            <h2 className="attractions-title">Top Dubai Attractions</h2>
+            <h2 className="attractions-title">Recommended Attractions</h2>
             <p className="attractions-subtitle">
               Explore iconic landmarks &amp; unforgettable experiences in Dubai
             </p>

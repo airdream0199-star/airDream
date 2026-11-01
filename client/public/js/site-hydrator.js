@@ -153,7 +153,7 @@
     const renderCard = (tr, isDuplicate = false) => `
       <div class="transfer-vehicle-card" ${isDuplicate ? 'aria-hidden="true"' : ''} onclick="openBookingModalWithPackage('Airport Transfer - ${escapeJs(tr.title)}', '${escapeJs(tr.price || '55$')}')">
         <div class="transfer-vehicle-img-wrap">
-          <img src="${tr.image}" alt="${escapeHtml(tr.title)}" class="transfer-vehicle-img" loading="lazy" onerror="this.src='assets/vehicles/toyota-land-cruiser.svg'">
+          <img src="${tr.image}" alt="${escapeHtml(tr.title)}" class="transfer-vehicle-img" loading="lazy" onerror="this.src='/assets/vehicles/toyota-land-cruiser.jpg'">
         </div>
         <h3 class="transfer-vehicle-title">${escapeHtml(tr.title)}</h3>
         <div class="transfer-vehicle-specs">
@@ -182,7 +182,8 @@
       <article class="package-card" data-category="${escapeHtml(pkg.category || 'tours')}">
         <div class="package-image-holder">
           <img src="${pkg.image}" alt="${escapeHtml(pkg.title)}" class="package-img" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=700&q=80'">
-          <span class="package-badge-tag ${pkg.badge && pkg.badge.toLowerCase().includes('seller') ? 'gold' : ''}">${escapeHtml(pkg.badge || 'Featured')}</span>
+          ${(pkg.featured || pkg.isFeatured) ? `<span class="package-featured-flag"><i class="fa-solid fa-star"></i> Featured</span>` : ''}
+          ${pkg.badge ? `<span class="package-badge-tag ${pkg.badge && pkg.badge.toLowerCase().includes('seller') ? 'gold' : ''}">${escapeHtml(pkg.badge)}</span>` : ''}
           <span class="package-duration-tag"><i class="fa-regular fa-clock"></i> ${escapeHtml(pkg.duration || '7 Days')}</span>
         </div>
         <div class="package-body">

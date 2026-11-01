@@ -84,9 +84,9 @@ export function SiteDataProvider({ children }) {
     reviews: [],
     whyChooseUs: DEFAULT_WHY_CHOOSE_US,
     settings: {
-      brandName: 'Air Dream',
+      brandName: 'AIR DREAM',
       brandTagline: 'TRAVEL TOURISM LLC',
-      logoUrl: '/assets/air-dream-badge.svg',
+      logoUrl: '/assets/air-dream-logo.png',
       phone: '+971 58 833 8927',
       whatsapp: '971588338927',
       email: 'info@airdreamtravel.com',
@@ -170,7 +170,10 @@ export function SiteDataProvider({ children }) {
             badge: p.discount || p.badge || 'Popular',
             badgeClass: 'gold',
             price: typeof p.price === 'number' ? `$${p.price}` : (p.price || '$649'),
-            image: (p.images && p.images[0]) || p.image || ''
+            image: (p.images && p.images[0]) || p.image || '',
+            featured: Boolean(p.featured || p.isFeatured),
+            isFeatured: Boolean(p.featured || p.isFeatured),
+            inclusions: p.inclusions || p.features || p.included || []
           }));
         }
 
@@ -204,15 +207,67 @@ export function SiteDataProvider({ children }) {
           if (parsed.whyChooseUs && (parsed.whyChooseUs[0]?.title === 'Global Reach' || parsed.whyChooseUs[0]?.title === 'Tour Guide')) {
             parsed.whyChooseUs = DEFAULT_WHY_CHOOSE_US;
           }
-          if (parsed.settings && (parsed.settings.aboutArchImg?.includes('photo-1507525428034') || parsed.settings.aboutQuote?.includes('Arabian Travel'))) {
-            parsed.settings = {
-              ...parsed.settings,
-              aboutQuote: 'We, at Air Dream Travel Tourism LLC, cater to our clients a lifestyle at its best where they can feel the pulse of Dubai and the unseen facets of the world, through our exclusive guided tours and other value-added services.',
-              aboutArchImg: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80',
-              bubble1Img: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=400&q=80',
-              bubble2Img: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=300&q=80',
-              bubble3Img: 'https://images.unsplash.com/photo-1580674684081-7617fbf3d745?auto=format&fit=crop&w=400&q=80'
-            };
+          if (parsed.transfers && (parsed.transfers[0]?.image?.endsWith('.svg') || parsed.transfers.length === 0)) {
+            parsed.transfers = [
+              {
+                id: 'tr-1',
+                title: 'Toyota Hyryder – Urban SUV',
+                passengers: 4,
+                luggage: 3,
+                price: '$50',
+                image: '/assets/vehicles/toyota-hyryder.jpg'
+              },
+              {
+                id: 'tr-2',
+                title: 'Toyota Fortuner – 4WD SUV',
+                passengers: 6,
+                luggage: 4,
+                price: '$65',
+                image: '/assets/vehicles/toyota-fortuner.jpg'
+              },
+              {
+                id: 'tr-3',
+                title: 'Toyota Land Cruiser – VIP 4WD SUV',
+                passengers: 6,
+                luggage: 5,
+                price: '$85',
+                image: '/assets/vehicles/toyota-land-cruiser.jpg'
+              },
+              {
+                id: 'tr-4',
+                title: 'Toyota Alphard – Luxury VIP Van',
+                passengers: 7,
+                luggage: 6,
+                price: '$110',
+                image: '/assets/vehicles/toyota-alphard-vip.jpg'
+              },
+              {
+                id: 'tr-5',
+                title: 'Toyota Corolla – Chauffeur Sedan',
+                passengers: 4,
+                luggage: 3,
+                price: '$40',
+                image: '/assets/vehicles/toyota-corolla.jpg'
+              }
+            ];
+          }
+          if (parsed.settings) {
+            if (!parsed.settings.logoUrl || parsed.settings.logoUrl.includes('badge.svg')) {
+              parsed.settings.logoUrl = '/assets/air-dream-logo.png';
+            }
+            if (parsed.settings.brandName && parsed.settings.brandName.toLowerCase().includes('air dream')) {
+              parsed.settings.brandName = 'AIR DREAM';
+            }
+            if (parsed.settings.aboutArchImg?.includes('photo-1507525428034') || parsed.settings.aboutQuote?.includes('Arabian Travel')) {
+              parsed.settings = {
+                ...parsed.settings,
+                aboutQuote: 'We, at Air Dream Travel Tourism LLC, cater to our clients a lifestyle at its best where they can feel the pulse of Dubai and the unseen facets of the world, through our exclusive guided tours and other value-added services.',
+                aboutArchImg: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80',
+                bubble1Img: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=400&q=80',
+                bubble2Img: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=300&q=80',
+                bubble3Img: 'https://images.unsplash.com/photo-1580674684081-7617fbf3d745?auto=format&fit=crop&w=400&q=80'
+              };
+            }
           }
           localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
           setSiteData((prev) => ({ ...prev, ...parsed }));

@@ -1372,6 +1372,7 @@ textarea.form-control {
   color: #FFFFFF;
   letter-spacing: -0.4px;
   line-height: 1.05;
+  text-transform: uppercase;
 }
 
 .sidebar-brand-logo-wrap .air-dream-brand-sub,
@@ -1446,6 +1447,7 @@ textarea.form-control {
   font-weight: 900;
   line-height: 1.05;
   letter-spacing: -0.4px;
+  text-transform: uppercase;
 }
 
 .admin-login-brand .air-dream-brand-sub,

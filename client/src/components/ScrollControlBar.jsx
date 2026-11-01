@@ -1,11 +1,11 @@
 import React from 'react';
 
 /**
- * Modern manual navigation arrow controls (< and >) for auto-scrolling carousels.
+ * Modern auto/manual scroll controls (< and >) with mode toggle button for carousels.
  */
 export default function ScrollControlBar({ onPrev, onNext }) {
   return (
-    <div className="carousel-scroll-controls" aria-label="Manual scroll controls">
+    <div className="carousel-scroll-controls" aria-label="Carousel navigation controls">
       <div className="scroll-arrow-group">
         <button
           type="button"
