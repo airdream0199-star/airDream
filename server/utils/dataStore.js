@@ -114,6 +114,7 @@ class DataStore {
       attractions: this.get('activities'),
       tours: this.get('tours'),
       transfers: this.get('transfers'),
+      holidayPackages: this.get('holidayPackages'),
       packages: this.get('travelDeals'),
       gallery: this.get('gallery'),
       reviews: this.get('testimonials'),
@@ -206,6 +207,7 @@ class DataStore {
     if (content.activities) this.data.activities = content.activities;
     if (content.tours) this.data.tours = content.tours;
     if (content.transfers) this.data.transfers = content.transfers;
+    if (content.holidayPackages) this.data.holidayPackages = content.holidayPackages;
     if (content.packages) this.data.travelDeals = content.packages;
     if (content.travelDeals) this.data.travelDeals = content.travelDeals;
     if (content.gallery) this.data.gallery = content.gallery;

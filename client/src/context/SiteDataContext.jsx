@@ -79,6 +79,7 @@ export function SiteDataProvider({ children }) {
     attractions: [],
     tours: [],
     transfers: [],
+    holidayPackages: [],
     packages: [],
     gallery: [],
     reviews: [],
@@ -124,12 +125,13 @@ export function SiteDataProvider({ children }) {
 
     // 2. Fallback to individual REST endpoints
     try {
-      const [actRes, tourRes, dealRes, testRes, whyRes] = await Promise.allSettled([
+      const [actRes, tourRes, dealRes, testRes, whyRes, holRes] = await Promise.allSettled([
         api.get('/activities'),
         api.get('/tours'),
         api.get('/travel-deals'),
         api.get('/testimonials'),
-        api.get('/why-choose-us')
+        api.get('/why-choose-us'),
+        api.get('/holiday-packages')
       ]);
 
       setSiteData((prev) => {
@@ -137,6 +139,10 @@ export function SiteDataProvider({ children }) {
 
         if (whyRes.status === 'fulfilled' && Array.isArray(whyRes.value.data) && whyRes.value.data.length > 0) {
           updated.whyChooseUs = whyRes.value.data;
+        }
+
+        if (holRes && holRes.status === 'fulfilled' && Array.isArray(holRes.value.data) && holRes.value.data.length > 0) {
+          updated.holidayPackages = holRes.value.data;
         }
 
         if (actRes.status === 'fulfilled' && Array.isArray(actRes.value.data) && actRes.value.data.length > 0) {

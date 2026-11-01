@@ -145,7 +145,7 @@
       "guide": "Driver-guide",
       "capacity": "6 Persons",
       "price": "$120",
-      "rating": 5.0,
+      "rating": 5,
       "image": "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=800&q=80",
       "inclusions": [
         "4WD Land Cruiser Dune Bashing",
@@ -189,7 +189,7 @@
       "guide": "Driver-guide",
       "capacity": "4 Persons",
       "price": "$85",
-      "rating": 5.0,
+      "rating": 5,
       "image": "https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=800&q=80",
       "inclusions": [
         "Wadi Darbat Cascades & Lake",
@@ -233,7 +233,7 @@
       "guide": "Certified Guide",
       "capacity": "5 Persons",
       "price": "$150",
-      "rating": 5.0,
+      "rating": 5,
       "image": "https://images.unsplash.com/photo-1512632570417-a6032a6f446f?auto=format&fit=crop&w=800&q=80",
       "inclusions": [
         "Sheikh Zayed Grand Mosque Entry",
@@ -319,7 +319,11 @@
       "reviews": 128,
       "featured": true,
       "isFeatured": true,
-      "inclusions": ["5-Star Hotel", "VIP Transfers", "Daily Breakfast"],
+      "inclusions": [
+        "5-Star Hotel",
+        "VIP Transfers",
+        "Daily Breakfast"
+      ],
       "price": "$649",
       "image": "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80"
     },
@@ -330,11 +334,15 @@
       "badge": "Spiritual VIP",
       "title": "Executive 5-Star Umrah Package (Front of Haram)",
       "duration": "10 Days / 9 Nights",
-      "rating": 5.0,
+      "rating": 5,
       "reviews": 340,
       "featured": true,
       "isFeatured": true,
-      "inclusions": ["Return Flights", "Clock Tower Hotel", "Umrah Visa"],
+      "inclusions": [
+        "Return Flights",
+        "Clock Tower Hotel",
+        "Umrah Visa"
+      ],
       "price": "$1,199",
       "image": "https://images.unsplash.com/photo-1564769625905-50e93615e769?auto=format&fit=crop&w=800&q=80"
     },
@@ -349,7 +357,11 @@
       "reviews": 95,
       "featured": false,
       "isFeatured": false,
-      "inclusions": ["Pool Villa", "Speedboat Cruise", "Balinese Spa"],
+      "inclusions": [
+        "Pool Villa",
+        "Speedboat Cruise",
+        "Balinese Spa"
+      ],
       "price": "$899",
       "image": "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=800&q=80"
     },
@@ -364,7 +376,11 @@
       "reviews": 210,
       "featured": false,
       "isFeatured": false,
-      "inclusions": ["Direct Emirates", "2x 23kg Luggage", "Gourmet Dining"],
+      "inclusions": [
+        "Direct Emirates",
+        "2x 23kg Luggage",
+        "Gourmet Dining"
+      ],
       "price": "$580",
       "image": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=800&q=80"
     },
@@ -379,7 +395,11 @@
       "reviews": 112,
       "featured": true,
       "isFeatured": true,
-      "inclusions": ["Glacier Express", "4-Star Alpine Lodge", "Jungfrau Pass"],
+      "inclusions": [
+        "Glacier Express",
+        "4-Star Alpine Lodge",
+        "Jungfrau Pass"
+      ],
       "price": "$1,450",
       "image": "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?auto=format&fit=crop&w=800&q=80"
     },
@@ -394,7 +414,11 @@
       "reviews": 84,
       "featured": false,
       "isFeatured": false,
-      "inclusions": ["Etihad Airways", "Full Entertainment", "Flexible Dates"],
+      "inclusions": [
+        "Etihad Airways",
+        "Full Entertainment",
+        "Flexible Dates"
+      ],
       "price": "$790",
       "image": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=800&q=80"
     },
@@ -409,7 +433,11 @@
       "reviews": 168,
       "featured": true,
       "isFeatured": true,
-      "inclusions": ["Cave Hotel", "Hot Air Balloon", "Turkish Breakfast"],
+      "inclusions": [
+        "Cave Hotel",
+        "Hot Air Balloon",
+        "Turkish Breakfast"
+      ],
       "price": "$920",
       "image": "https://images.unsplash.com/photo-1527838832700-5059252407fa?auto=format&fit=crop&w=800&q=80"
     },
@@ -420,11 +448,15 @@
       "badge": "All Inclusive VIP",
       "title": "Deluxe Madinah & Makkah 14-Day Spiritual Journey",
       "duration": "14 Days / 13 Nights",
-      "rating": 5.0,
+      "rating": 5,
       "reviews": 295,
       "featured": true,
       "isFeatured": true,
-      "inclusions": ["Direct Saudi Airlines", "Haram Front View", "Private GMC Transport"],
+      "inclusions": [
+        "Direct Saudi Airlines",
+        "Haram Front View",
+        "Private GMC Transport"
+      ],
       "price": "$1,590",
       "image": "https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=800&q=80"
     },
@@ -439,7 +471,11 @@
       "reviews": 142,
       "featured": false,
       "isFeatured": false,
-      "inclusions": ["Singapore Airlines", "30kg Luggage", "World-Class Catering"],
+      "inclusions": [
+        "Singapore Airlines",
+        "30kg Luggage",
+        "World-Class Catering"
+      ],
       "price": "$640",
       "image": "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=800&q=80"
     }
@@ -791,5 +827,103 @@
     "bubble1Img": "https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=400&q=80",
     "bubble2Img": "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=300&q=80",
     "bubble3Img": "https://images.unsplash.com/photo-1580674684081-7617fbf3d745?auto=format&fit=crop&w=400&q=80"
-  }
+  },
+  "holidayPackages": [
+    {
+      "_id": "hp-1",
+      "id": "hp-1",
+      "title": "Atlantis Aquaventure & Lost Chambers VIP Pass",
+      "location": "Palm Jumeirah, Dubai",
+      "tagline": "Palm Jumeirah, Dubai",
+      "rating": 5,
+      "hours": "Full Day",
+      "duration": "Full Day",
+      "carHours": "Luxury Sprinter",
+      "vehicle": "Luxury Sprinter",
+      "guide": "Park Concierge",
+      "capacity": "2–8 Guests",
+      "price": "",
+      "image": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "_id": "hp-2",
+      "id": "hp-2",
+      "title": "Dubai Marina Luxury Dhow Dinner Cruise & Live Show",
+      "location": "Dubai Marina, UAE",
+      "tagline": "Dubai Marina, UAE",
+      "rating": 4.9,
+      "hours": "03-Hrs",
+      "duration": "03-Hrs",
+      "carHours": "Glass Dhow Yacht",
+      "vehicle": "Glass Dhow Yacht",
+      "guide": "On-board Host",
+      "capacity": "4–10 Guests",
+      "price": "",
+      "image": "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "_id": "hp-3",
+      "id": "hp-3",
+      "title": "Musandam Oman Fjords Cruise, Snorkeling & Dolphins",
+      "location": "Khasab, Musandam",
+      "tagline": "Khasab, Musandam",
+      "rating": 5,
+      "hours": "10-Hrs",
+      "duration": "10-Hrs",
+      "carHours": "A/C VIP Coach",
+      "vehicle": "A/C VIP Coach",
+      "guide": "Marine Guide",
+      "capacity": "6–12 Guests",
+      "price": "",
+      "image": "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "_id": "hp-4",
+      "id": "hp-4",
+      "title": "Sunrise Hot Air Balloon Over Margham Red Dunes",
+      "location": "Al Margham Desert",
+      "tagline": "Al Margham Desert",
+      "rating": 5,
+      "hours": "05-Hrs",
+      "duration": "05-Hrs",
+      "carHours": "4WD Cruiser",
+      "vehicle": "4WD Cruiser",
+      "guide": "Licensed Pilot",
+      "capacity": "2–6 Guests",
+      "price": "",
+      "image": "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "_id": "hp-5",
+      "id": "hp-5",
+      "title": "Ferrari World & Warner Bros World Yas Island Pass",
+      "location": "Yas Island, Abu Dhabi",
+      "tagline": "Yas Island, Abu Dhabi",
+      "rating": 4.9,
+      "hours": "09-Hrs",
+      "duration": "09-Hrs",
+      "carHours": "Executive Van",
+      "vehicle": "Executive Van",
+      "guide": "English Guide",
+      "capacity": "4–8 Guests",
+      "price": "",
+      "image": "https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "_id": "hp-6",
+      "id": "hp-6",
+      "title": "Al Ain Garden City, Jebel Hafeet & Hot Springs Tour",
+      "location": "Al Ain, UAE",
+      "tagline": "Al Ain, UAE",
+      "rating": 4.9,
+      "hours": "08-Hrs",
+      "duration": "08-Hrs",
+      "carHours": "4WD Cruiser",
+      "vehicle": "4WD Cruiser",
+      "guide": "Heritage Guide",
+      "capacity": "4–6 Guests",
+      "price": "",
+      "image": "https://images.unsplash.com/photo-1512632570417-a6032a6f446f?auto=format&fit=crop&w=800&q=80"
+    }
+  ]
 }

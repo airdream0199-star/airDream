@@ -7,6 +7,7 @@ import AttractionsSection from '../components/AttractionsSection';
 import AboutSection from '../components/AboutSection';
 import ToursSection from '../components/ToursSection';
 import AirportTransferSection from '../components/AirportTransferSection';
+import HolidayPackagesSection from '../components/HolidayPackagesSection';
 import GallerySection from '../components/GallerySection';
 import PackagesSection from '../components/PackagesSection';
 import ReviewsSection from '../components/ReviewsSection';
@@ -61,6 +62,9 @@ export default function Home() {
 
         {/* 7. Airport Transfer Marquee */}
         <AirportTransferSection onBookTransfer={handleBookItem} />
+
+        {/* 7.5. Special Holiday Packages (6 Distinct Cards - Same as Attractions - Ticket) */}
+        <HolidayPackagesSection onBookPackage={handleBookItem} />
 
         {/* 8. Photo Gallery */}
         <GallerySection onOpenPhoto={handleBookItem} />

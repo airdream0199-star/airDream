@@ -22,6 +22,7 @@ export default function AdminPanel() {
     whyChooseUs: [],
     tours: [],
     transfers: [],
+    holidayPackages: [],
     gallery: [],
     packages: [],
     reviews: [],
@@ -61,6 +62,7 @@ export default function AdminPanel() {
   // Search Filters
   const [searchAttractions, setSearchAttractions] = useState("");
   const [searchTours, setSearchTours] = useState("");
+  const [searchHolidayPackages, setSearchHolidayPackages] = useState("");
   const [searchEnquiries, setSearchEnquiries] = useState("");
 
   // Universal Modal State
@@ -415,6 +417,21 @@ export default function AdminPanel() {
             "English/Arabic Guide",
           ],
         };
+      case "holidayPackage":
+        return {
+          title: "",
+          tagline: "Dubai, UAE",
+          location: "Dubai, UAE",
+          image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80",
+          duration: "Full Day",
+          hours: "Full Day",
+          vehicle: "Luxury Sprinter",
+          carHours: "Luxury Sprinter",
+          guide: "Park Concierge",
+          capacity: "2–8 Guests",
+          price: "$135",
+          rating: 5.0,
+        };
       case "transfer":
         return {
           title: "",
@@ -598,6 +615,7 @@ export default function AdminPanel() {
         gallery: "gallery",
         tour: "tours",
         transfer: "transfers",
+        holidayPackage: "holidayPackages",
         package: "packages",
         review: "reviews",
         whyChooseUs: "whyChooseUs",
@@ -646,6 +664,22 @@ export default function AdminPanel() {
           name: (modalFormData.name || "Dubai Landmark Attraction").trim(),
           price: (modalFormData.price || "$49").trim(),
           activities: modalFormData.activities || "Multiple activities available",
+        };
+      } else if (modalCollection === "holidayPackage") {
+        const cleanPrice = (modalFormData.price || "$135").trim();
+        formDataToSave = {
+          ...modalFormData,
+          title: (modalFormData.title || "Special Holiday Package").trim(),
+          price: cleanPrice.startsWith("$") || cleanPrice.toLowerCase().includes("aed") || cleanPrice.toLowerCase().includes("omr") ? cleanPrice : `${cleanPrice}`,
+          duration: modalFormData.duration || modalFormData.hours || "Full Day",
+          hours: modalFormData.hours || modalFormData.duration || "Full Day",
+          location: (modalFormData.location || modalFormData.tagline || "Dubai, UAE").trim(),
+          tagline: (modalFormData.tagline || modalFormData.location || "Dubai, UAE").trim(),
+          vehicle: modalFormData.vehicle || modalFormData.carHours || "Luxury Sprinter",
+          carHours: modalFormData.carHours || modalFormData.vehicle || "Luxury Sprinter",
+          guide: (modalFormData.guide || "Park Concierge").trim(),
+          capacity: (modalFormData.capacity || modalFormData.groupSize || "2–8 Guests").trim(),
+          rating: modalFormData.rating ? `${modalFormData.rating}` : "5.0",
         };
       } else if (modalCollection === "tour") {
         const cleanPrice = (modalFormData.price || "$120").trim();
@@ -758,6 +792,12 @@ export default function AdminPanel() {
             } else {
               api.put(`/tours/${editingItemId}`, formDataToSave).catch(() => {});
             }
+          } else if (modalCollection === "holidayPackage") {
+            if (!editingItemId) {
+              api.post("/holiday-packages", formDataToSave).catch(() => {});
+            } else {
+              api.put(`/holiday-packages/${editingItemId}`, formDataToSave).catch(() => {});
+            }
           } else if (modalCollection === "transfer") {
             if (!editingItemId) {
               api.post("/transfers", formDataToSave).catch(() => {});
@@ -829,6 +869,8 @@ export default function AdminPanel() {
           api.delete(`/tours/${itemId}`).catch(() => {});
         } else if (collectionKey === "transfers") {
           api.delete(`/transfers/${itemId}`).catch(() => {});
+        } else if (collectionKey === "holidayPackages") {
+          api.delete(`/holiday-packages/${itemId}`).catch(() => {});
         } else if (collectionKey === "gallery") {
           api.delete(`/gallery/${itemId}`).catch(() => {});
         } else if (collectionKey === "packages") {
@@ -1136,6 +1178,18 @@ export default function AdminPanel() {
     return list.filter((item) => (item.name || "").toLowerCase().includes(q));
   }, [siteData.attractions, searchAttractions]);
 
+  const filteredHolidayPackages = useMemo(() => {
+    const list = siteData.holidayPackages || [];
+    if (!searchHolidayPackages.trim()) return list;
+    const q = searchHolidayPackages.toLowerCase();
+    return list.filter(
+      (item) =>
+        (item.title || "").toLowerCase().includes(q) ||
+        (item.location || "").toLowerCase().includes(q) ||
+        (item.tagline || "").toLowerCase().includes(q),
+    );
+  }, [siteData.holidayPackages, searchHolidayPackages]);
+
   const filteredTours = useMemo(() => {
     const list = siteData.tours || [];
     if (!searchTours.trim()) return list;
@@ -1183,6 +1237,10 @@ export default function AdminPanel() {
     tours: {
       title: "Attractions - Ticket",
       desc: "Manage tour itineraries, duration, 4WD vehicles, driver-guide, prices, and bookings",
+    },
+    holidayPackages: {
+      title: "Special Holiday Packages",
+      desc: "Manage 6-card Special Holiday packages carousel, itineraries, prices, vehicles, and guides",
     },
     transfers: {
       title: "Airport Transfers",
@@ -1356,6 +1414,20 @@ export default function AdminPanel() {
               <i className="fa-solid fa-mountain-sun"></i> Attractions - Ticket
             </span>
             <span className="tab-badge">{siteData.tours?.length || 0}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`sidebar-tab-btn ${activeTab === "holidayPackages" ? "active" : ""}`}
+            onClick={() => {
+              setActiveTab("holidayPackages");
+              setMobileMenuOpen(false);
+            }}
+          >
+            <span className="tab-btn-content">
+              <i className="fa-solid fa-umbrella-beach"></i> Special Holiday
+            </span>
+            <span className="tab-badge">{siteData.holidayPackages?.length || 0}</span>
           </button>
 
           <button
@@ -1720,6 +1792,13 @@ export default function AdminPanel() {
                   >
                     <i className="fa-solid fa-plus text-gold"></i> Add Tour
                     Package
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-admin btn-admin-outline"
+                    onClick={() => openAddModal("holidayPackage")}
+                  >
+                    <i className="fa-solid fa-plus text-primary"></i> Add Special Holiday
                   </button>
                   <button
                     type="button"
@@ -2334,6 +2413,105 @@ export default function AdminPanel() {
                             className="btn-card-action btn-delete"
                             onClick={() =>
                               handleDeleteItem("tours", id, tour.title)
+                            }
+                          >
+                            <i className="fa-solid fa-trash-can"></i> Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* TAB: SPECIAL HOLIDAY PACKAGES */}
+          {activeTab === "holidayPackages" && (
+            <section className="tab-pane active" id="pane-holiday-packages">
+              <div className="view-header">
+                <div className="view-header-title">
+                  <h2>
+                    <i className="fa-solid fa-umbrella-beach text-gold"></i> Special Holiday Packages
+                  </h2>
+                  <p>
+                    Manage 6-card Special Holiday packages carousel, itineraries, prices, vehicles, and guides
+                  </p>
+                </div>
+                <div className="view-header-actions">
+                  <div className="admin-search-wrap">
+                    <i className="fa-solid fa-magnifying-glass"></i>
+                    <input
+                      type="text"
+                      className="admin-search-input"
+                      placeholder="Search special holiday packages..."
+                      value={searchHolidayPackages}
+                      onChange={(e) => setSearchHolidayPackages(e.target.value)}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-admin btn-admin-primary"
+                    onClick={() => openAddModal("holidayPackage")}
+                  >
+                    <i className="fa-solid fa-plus"></i> Add Special Holiday
+                  </button>
+                </div>
+              </div>
+
+              <div className="items-grid">
+                {filteredHolidayPackages.map((pkg) => {
+                  const id = pkg.id || pkg._id;
+                  return (
+                    <div className="item-card" key={id}>
+                      <div className="item-card-image">
+                        <img src={pkg.image} alt={pkg.title} />
+                        <span className="item-price-tag">{pkg.price}</span>
+                        <span
+                          className="item-badge-pill"
+                          style={{ left: "auto", right: "10px" }}
+                        >
+                          <i
+                            className="fa-solid fa-star text-gold"
+                            style={{ marginRight: "4px" }}
+                          ></i>{" "}
+                          {pkg.rating || 5}
+                        </span>
+                      </div>
+                      <div className="item-card-body">
+                        <h4 className="item-card-title">{pkg.title}</h4>
+                        <div className="item-card-sub">{pkg.location || pkg.tagline || "Dubai, UAE"}</div>
+                        <div className="item-features-list">
+                          <span className="feature-pill">
+                            <i className="fa-regular fa-clock"></i>{" "}
+                            {pkg.duration || pkg.hours || "Full Day"}
+                          </span>
+                          <span className="feature-pill">
+                            <i className="fa-solid fa-car"></i>{" "}
+                            {pkg.vehicle || pkg.carHours || "Luxury Sprinter"}
+                          </span>
+                          <span className="feature-pill">
+                            <i className="fa-solid fa-user-tie"></i>{" "}
+                            {pkg.guide || "Park Concierge"}
+                          </span>
+                          <span className="feature-pill">
+                            <i className="fa-solid fa-users"></i>{" "}
+                            {pkg.capacity || pkg.groupSize || "2–8 Guests"}
+                          </span>
+                        </div>
+                        <div className="item-card-actions">
+                          <button
+                            type="button"
+                            className="btn-card-action btn-edit"
+                            onClick={() => openEditModal("holidayPackage", pkg)}
+                          >
+                            <i className="fa-solid fa-pen-to-square"></i> Edit
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-card-action btn-delete"
+                            onClick={() =>
+                              handleDeleteItem("holidayPackages", id, pkg.title)
                             }
                           >
                             <i className="fa-solid fa-trash-can"></i> Delete
@@ -3499,8 +3677,8 @@ export default function AdminPanel() {
           <div className="modal-header">
             <h3>
               {editingItemId
-                ? `Edit ${modalCollection}`
-                : `Add New ${modalCollection}`}
+                ? `Edit ${modalCollection === "holidayPackage" ? "Special Holiday Package" : modalCollection}`
+                : `Add New ${modalCollection === "holidayPackage" ? "Special Holiday Package" : modalCollection}`}
             </h3>
             <button
               type="button"
@@ -3922,7 +4100,7 @@ export default function AdminPanel() {
               )}
 
               {/* DYNAMIC FIELDS: TOUR */}
-              {modalCollection === "tour" && (
+              {(modalCollection === "tour" || modalCollection === "holidayPackage") && (
                 <>
                   <div className="form-grid-2">
                     <div className="form-field">

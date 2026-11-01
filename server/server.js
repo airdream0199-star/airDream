@@ -19,6 +19,7 @@ const siteContentRoutes = require("./routes/siteContentRoutes");
 const settingRoutes = require("./routes/settingRoutes");
 const wallpaperRoutes = require("./routes/wallpaperRoutes");
 const transferRoutes = require("./routes/transferRoutes");
+const holidayPackageRoutes = require("./routes/holidayPackageRoutes");
 const galleryRoutes = require("./routes/galleryRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const whyChooseUsRoutes = require("./routes/whyChooseUsRoutes");
@@ -124,6 +125,7 @@ const mountAllRoutes = (prefix = "") => {
   app.use(`${prefix}/settings`, settingRoutes);
   app.use(`${prefix}/wallpapers`, wallpaperRoutes);
   app.use(`${prefix}/transfers`, transferRoutes);
+  app.use(`${prefix}/holiday-packages`, holidayPackageRoutes);
   app.use(`${prefix}/gallery`, galleryRoutes);
 };
 
