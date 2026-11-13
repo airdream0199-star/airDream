@@ -22,6 +22,7 @@ const memCache = {
   activities: [],
   tours: [],
   transfers: [],
+  holidayPackages: [],
   travelDeals: [],
   gallery: [],
   testimonials: [],
@@ -45,6 +46,7 @@ const MODEL_MAP = {
   activities: 'Activity',
   tours: 'Tour',
   transfers: 'Transfer',
+  holidayPackages: 'HolidayPackage',
   travelDeals: 'TravelDeal',
   gallery: 'Gallery',
   testimonials: 'Testimonial',
@@ -247,6 +249,7 @@ class DataStore {
       attractions: this.get('activities'),
       tours: this.get('tours'),
       transfers: this.get('transfers'),
+      holidayPackages: this.get('holidayPackages'),
       packages: this.get('travelDeals'),
       gallery: this.get('gallery'),
       reviews: this.get('testimonials'),
@@ -268,6 +271,7 @@ class DataStore {
     if (content.activities) memCache.activities = content.activities;
     if (content.tours) memCache.tours = content.tours;
     if (content.transfers) memCache.transfers = content.transfers;
+    if (content.holidayPackages) memCache.holidayPackages = content.holidayPackages;
     if (content.packages) memCache.travelDeals = content.packages;
     if (content.travelDeals) memCache.travelDeals = content.travelDeals;
     if (content.gallery) memCache.gallery = content.gallery;

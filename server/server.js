@@ -9,6 +9,7 @@ const { seedAdmin } = require("./controllers/authController");
 // Pre-register all Mongoose models so they are available to dataStore.js
 require("./models/Wallpaper");
 require("./models/Transfer");
+require("./models/HolidayPackage");
 require("./models/Gallery");
 require("./models/WhyChooseUs");
 require("./models/SiteSetting");

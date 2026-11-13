@@ -1099,6 +1099,7 @@ export default function AdminPanel() {
         settings: settingsForm,
       };
       saveSiteData(updated);
+      api.put("/settings", settingsForm).catch(() => {});
       toast.success("Site settings and contact details saved successfully!");
     } catch (err) {
       toast.error("Could not save settings.");

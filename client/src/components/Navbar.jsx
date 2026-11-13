@@ -13,11 +13,9 @@ export default function Navbar({ onOpenQuote }) {
   const phone = settings.phone || "+971 58 833 8927";
   const whatsapp = settings.whatsapp || "971588338927";
   const email = settings.email || "info@airdreamtravel.com";
-  const brandName = "AIR DREAM";
+  const brandName = settings.brandName || "AIR DREAM";
   const brandTagline = settings.brandTagline || "TRAVEL TOURISM LLC";
-  const logoUrl = (settings.logoUrl && !settings.logoUrl.includes('badge.svg'))
-    ? settings.logoUrl
-    : "/assets/air-dream-logo.png";
+  const logoUrl = settings.logoUrl || "/assets/air-dream-logo.png";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -145,10 +143,9 @@ export default function Navbar({ onOpenQuote }) {
               }}
             />
             <div className="air-dream-brand-text">
-              <span className="air-dream-brand-name" style={{ fontSize: "1.3rem" }}>AIR DREAM</span>
+              <span className="air-dream-brand-name" style={{ fontSize: "1.3rem" }}>{brandName}</span>
               <div className="air-dream-brand-sub-wrap">
-                <span className="air-dream-brand-sub" style={{ fontSize: "0.7rem" }}>TRAVEL TOURISM</span>
-                <span className="air-dream-brand-llc" style={{ fontSize: "0.7rem" }}>LLC</span>
+                <span className="air-dream-brand-sub" style={{ fontSize: "0.7rem" }}>{brandTagline}</span>
               </div>
             </div>
           </Link>
@@ -341,7 +338,7 @@ export default function Navbar({ onOpenQuote }) {
                 <i className="fa-solid fa-sliders"></i> Admin
               </Link>
               <a
-                href="https://wa.me/971588338927"
+                href={`https://wa.me/${whatsapp.replace(/[^0-9]/g, '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-borderlink-signup"

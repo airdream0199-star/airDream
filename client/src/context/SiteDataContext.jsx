@@ -125,13 +125,17 @@ export function SiteDataProvider({ children }) {
 
     // 2. Fallback to individual REST endpoints
     try {
-      const [actRes, tourRes, dealRes, testRes, whyRes, holRes] = await Promise.allSettled([
+      const [actRes, tourRes, dealRes, testRes, whyRes, holRes, wallRes, transRes, galRes, setRes] = await Promise.allSettled([
         api.get('/activities'),
         api.get('/tours'),
         api.get('/travel-deals'),
         api.get('/testimonials'),
         api.get('/why-choose-us'),
-        api.get('/holiday-packages')
+        api.get('/holiday-packages'),
+        api.get('/wallpapers'),
+        api.get('/transfers'),
+        api.get('/gallery'),
+        api.get('/settings')
       ]);
 
       setSiteData((prev) => {
@@ -143,6 +147,22 @@ export function SiteDataProvider({ children }) {
 
         if (holRes && holRes.status === 'fulfilled' && Array.isArray(holRes.value.data) && holRes.value.data.length > 0) {
           updated.holidayPackages = holRes.value.data;
+        }
+
+        if (wallRes.status === 'fulfilled' && Array.isArray(wallRes.value.data) && wallRes.value.data.length > 0) {
+          updated.wallpapers = wallRes.value.data;
+        }
+
+        if (transRes.status === 'fulfilled' && Array.isArray(transRes.value.data) && transRes.value.data.length > 0) {
+          updated.transfers = transRes.value.data;
+        }
+
+        if (galRes.status === 'fulfilled' && Array.isArray(galRes.value.data) && galRes.value.data.length > 0) {
+          updated.gallery = galRes.value.data;
+        }
+
+        if (setRes.status === 'fulfilled' && setRes.value.data && Object.keys(setRes.value.data).length > 0) {
+          updated.settings = { ...updated.settings, ...setRes.value.data };
         }
 
         if (actRes.status === 'fulfilled' && Array.isArray(actRes.value.data) && actRes.value.data.length > 0) {

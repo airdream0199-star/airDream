@@ -48,25 +48,11 @@ export default function AboutSection({ onOpenQuote }) {
     };
   }, []);
 
-  const activeArchImg = (settings.aboutArchImg && !settings.aboutArchImg.includes('photo-1507525428034'))
-    ? settings.aboutArchImg
-    : DEFAULT_ABOUT.aboutArchImg;
-
-  const activeBubble1 = (settings.bubble1Img && !settings.bubble1Img.includes('photo-1432405972618'))
-    ? settings.bubble1Img
-    : DEFAULT_ABOUT.bubble1Img;
-
-  const activeBubble2 = (settings.bubble2Img && !settings.bubble2Img.includes('photo-1544551763'))
-    ? settings.bubble2Img
-    : DEFAULT_ABOUT.bubble2Img;
-
-  const activeBubble3 = (settings.bubble3Img && !settings.bubble3Img.includes('photo-1544551763') && !settings.bubble3Img.includes('photo-1507525428034') && !settings.bubble3Img.includes('photo-1432405972618'))
-    ? settings.bubble3Img
-    : DEFAULT_ABOUT.bubble3Img;
-
-  const activeQuote = (settings.aboutQuote && !settings.aboutQuote.includes('Arabian Travel'))
-    ? settings.aboutQuote
-    : DEFAULT_ABOUT.aboutQuote;
+  const activeArchImg = settings.aboutArchImg || DEFAULT_ABOUT.aboutArchImg;
+  const activeBubble1 = settings.bubble1Img || DEFAULT_ABOUT.bubble1Img;
+  const activeBubble2 = settings.bubble2Img || DEFAULT_ABOUT.bubble2Img;
+  const activeBubble3 = settings.bubble3Img || DEFAULT_ABOUT.bubble3Img;
+  const activeQuote = settings.aboutQuote || DEFAULT_ABOUT.aboutQuote;
 
   return (
     <section className="about-us-section" id="about-us">

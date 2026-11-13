@@ -95,7 +95,6 @@ export default function HeroSection({ onOpenQuote }) {
     // 2. Fetch fresh from backend API
     try {
       const res = await api.get("/wallpapers");
-      console.log(res);
       if (res.data && Array.isArray(res.data) && res.data.length > 0) {
         setSlides(res.data.map(formatSlide));
         return;
