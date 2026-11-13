@@ -1,96 +1,79 @@
 const TravelDeal = require('../models/TravelDeal');
 const store = require('../utils/dataStore');
+const mongoose = require('mongoose');
 
-// Get all travel deals
+const dbOk = () => mongoose.connection.readyState === 1;
+
 exports.getDeals = async (req, res) => {
   try {
-    const query = req.query.all ? {} : { active: true };
-    let deals = [];
-    try {
-      deals = await TravelDeal.find(query).sort({ order: 1, createdAt: -1 });
-    } catch (e) {
-      console.warn('[TravelDeal DB fallback]', e.message);
+    if (dbOk()) {
+      const query = req.query.all ? {} : { active: true };
+      const deals = await TravelDeal.find(query).sort({ order: 1, createdAt: -1 }).lean();
+      return res.json(deals.map(d => ({ ...d, _id: String(d._id), id: String(d._id) })));
     }
-
-    if (!deals || deals.length === 0) {
-      deals = store.get('travelDeals');
-    }
-    res.json(deals);
-  } catch (error) {
-    res.json(store.get('travelDeals') || []);
+    return res.json(store.get('travelDeals'));
+  } catch (err) {
+    return res.json(store.get('travelDeals'));
   }
 };
 
-// Get single deal by ID
 exports.getDealById = async (req, res) => {
   try {
-    let deal = null;
-    try {
-      deal = await TravelDeal.findById(req.params.id);
-    } catch (e) {}
-
-    if (!deal) {
-      deal = store.getById('travelDeals', req.params.id);
+    if (dbOk()) {
+      const deal = await TravelDeal.findById(req.params.id).lean();
+      if (deal) return res.json({ ...deal, _id: String(deal._id), id: String(deal._id) });
     }
-
-    if (!deal) {
-      return res.status(404).json({ message: 'Deal not found' });
-    }
-    res.json(deal);
-  } catch (error) {
-    const deal = store.getById('travelDeals', req.params.id);
-    if (deal) return res.json(deal);
-    res.status(500).json({ message: 'Server error' });
+    const cached = store.getById('travelDeals', req.params.id);
+    if (cached) return res.json(cached);
+    return res.status(404).json({ message: 'Deal not found' });
+  } catch (err) {
+    const cached = store.getById('travelDeals', req.params.id);
+    if (cached) return res.json(cached);
+    return res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Create a new travel deal
 exports.createDeal = async (req, res) => {
   try {
-    const storedItem = store.add('travelDeals', req.body);
-    let savedDeal = storedItem;
-    try {
-      const newDeal = new TravelDeal({ ...req.body, _id: storedItem._id });
-      savedDeal = await newDeal.save();
-    } catch (dbErr) {
-      console.warn('[TravelDeal DB save fallback]', dbErr.message);
+    if (dbOk()) {
+      const doc = new TravelDeal(req.body);
+      const saved = await doc.save();
+      const plain = { ...saved.toObject(), _id: String(saved._id), id: String(saved._id) };
+      store.get('travelDeals').unshift(plain);
+      return res.status(201).json(plain);
     }
-    res.status(201).json(savedDeal || storedItem);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return res.status(201).json(store.add('travelDeals', req.body));
+  } catch (err) {
+    return res.status(500).json({ message: 'Error creating travel deal', error: err.message });
   }
 };
 
-// Update an existing travel deal
 exports.updateDeal = async (req, res) => {
   try {
-    const updatedStore = store.update('travelDeals', req.params.id, req.body);
-    let updatedDeal = updatedStore;
-    try {
-      updatedDeal = await TravelDeal.findByIdAndUpdate(
-        req.params.id,
-        req.body,
-        { new: true, runValidators: true }
-      );
-    } catch (dbErr) {
-      console.warn('[TravelDeal DB update fallback]', dbErr.message);
+    if (dbOk()) {
+      const updated = await TravelDeal.findByIdAndUpdate(req.params.id, req.body, {
+        new: true, runValidators: false
+      }).lean();
+      if (updated) {
+        const plain = { ...updated, _id: String(updated._id), id: String(updated._id) };
+        const cache = store.get('travelDeals');
+        const idx = cache.findIndex(i => String(i._id) === String(updated._id));
+        if (idx >= 0) cache[idx] = plain; else cache.unshift(plain);
+        return res.json(plain);
+      }
     }
-    res.json(updatedDeal || updatedStore);
-  } catch (error) {
-    const updatedStore = store.update('travelDeals', req.params.id, req.body);
-    res.json(updatedStore);
+    return res.json(store.update('travelDeals', req.params.id, req.body));
+  } catch (err) {
+    return res.status(400).json({ message: 'Error updating deal', error: err.message });
   }
 };
 
-// Delete a travel deal
 exports.deleteDeal = async (req, res) => {
   try {
+    if (dbOk()) await TravelDeal.findByIdAndDelete(req.params.id);
     store.delete('travelDeals', req.params.id);
-    try {
-      await TravelDeal.findByIdAndDelete(req.params.id);
-    } catch (e) {}
-    res.json({ message: 'Deal deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    return res.json({ message: 'Deal deleted successfully' });
+  } catch (err) {
+    return res.status(500).json({ message: 'Server error' });
   }
 };

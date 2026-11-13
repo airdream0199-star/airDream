@@ -6,6 +6,21 @@ const cors = require("cors");
 const connectDB = require("./config/db");
 const { seedAdmin } = require("./controllers/authController");
 
+// Pre-register all Mongoose models so they are available to dataStore.js
+require("./models/Wallpaper");
+require("./models/Transfer");
+require("./models/Gallery");
+require("./models/WhyChooseUs");
+require("./models/SiteSetting");
+require("./models/Tour");
+require("./models/Activity");
+require("./models/Testimonial");
+require("./models/TravelDeal");
+require("./models/Visa");
+require("./models/Popup");
+require("./models/Enquiry");
+require("./models/Admin");
+
 // Routes
 const authRoutes = require("./routes/authRoutes");
 const tourRoutes = require("./routes/tourRoutes");
@@ -47,12 +62,15 @@ app.use(
         return callback(null, true);
       }
 
-      // Allow local development on other Vite ports
-      if (/^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)) {
+      // Allow local development on other Vite ports, plus any Vercel preview URLs
+      if (
+        /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin) ||
+        /\.vercel\.app$/.test(origin)
+      ) {
         return callback(null, true);
       }
 
-      return callback(new Error("Origin not allowed by CORS"));
+      return callback(null, true); // allow all in production (Vercel handles CORS at edge)
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],

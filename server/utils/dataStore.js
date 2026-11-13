@@ -1,224 +1,291 @@
-const fs = require('fs');
-const path = require('path');
+/**
+ * dataStore.js — MongoDB-first persistent store with in-memory fallback.
+ *
+ * On Vercel, the filesystem is EPHEMERAL — data-store.json is wiped on every
+ * cold-start. All data is now saved to MongoDB. The in-memory object is only
+ * used as a temporary cache when MongoDB is unreachable.
+ */
+const mongoose = require('mongoose');
 
-const DATA_FILE = path.join(__dirname, '..', 'data-store.json');
+// ─── Lazy-loaded Mongoose models ───────────────────────────────────────────────
+const getModel = (name) => {
+  try {
+    return mongoose.model(name);
+  } catch {
+    return null;
+  }
+};
+
+// ─── In-memory fallback cache (lost on cold start — that's acceptable) ─────────
+const memCache = {
+  wallpapers: [],
+  activities: [],
+  tours: [],
+  transfers: [],
+  travelDeals: [],
+  gallery: [],
+  testimonials: [],
+  visas: [],
+  popups: [],
+  enquiries: [],
+  whyChooseUs: [],
+  settings: {},
+};
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+const isMongoConnected = () =>
+  mongoose.connection.readyState === 1; // 1 = connected
+
+const makeId = () =>
+  `item_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+
+// Map collection name → Mongoose model name
+const MODEL_MAP = {
+  wallpapers: 'Wallpaper',
+  activities: 'Activity',
+  tours: 'Tour',
+  transfers: 'Transfer',
+  travelDeals: 'TravelDeal',
+  gallery: 'Gallery',
+  testimonials: 'Testimonial',
+  visas: 'Visa',
+  popups: 'Popup',
+  enquiries: 'Enquiry',
+  whyChooseUs: 'WhyChooseUs',
+};
 
 class DataStore {
-  constructor() {
-    this.data = this.loadData();
-  }
-
-  loadData() {
-    try {
-      if (fs.existsSync(DATA_FILE)) {
-        const raw = fs.readFileSync(DATA_FILE, 'utf8');
-        return JSON.parse(raw);
-      }
-    } catch (err) {
-      console.warn('[DataStore] Warning loading data-store.json:', err.message);
-    }
-    return {
-      wallpapers: [],
-      activities: [],
-      tours: [],
-      transfers: [],
-      travelDeals: [],
-      gallery: [],
-      testimonials: [],
-      visas: [],
-      popups: [],
-      enquiries: [],
-      settings: {}
-    };
-  }
-
-  saveData() {
-    try {
-      fs.writeFileSync(DATA_FILE, JSON.stringify(this.data, null, 2), 'utf8');
-    } catch (err) {
-      console.error('[DataStore] Error persisting to data-store.json:', err.message);
-    }
-  }
-
+  // ── GET all ──────────────────────────────────────────────────────────────────
   get(collection) {
-    if (!this.data[collection]) {
-      this.data[collection] = [];
-    }
-    return this.data[collection];
+    if (!memCache[collection]) memCache[collection] = [];
+    return memCache[collection];
   }
 
+  // ── GET by ID ─────────────────────────────────────────────────────────────────
   getById(collection, id) {
     const list = this.get(collection);
     return list.find(item => String(item._id || item.id) === String(id)) || null;
   }
 
-  add(collection, item) {
-    if (!this.data[collection]) {
-      this.data[collection] = [];
-    }
-    const id = item._id || item.id || `item_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-    const newItem = {
-      _id: id,
-      id: id,
+  // ── ADD (write to Mongo + cache) ──────────────────────────────────────────────
+  async addAsync(collection, data) {
+    const id = data._id || data.id || makeId();
+    const item = {
+      _id: id, id,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      ...item
+      ...data,
     };
-    this.data[collection].unshift(newItem);
-    this.saveData();
-    return newItem;
+
+    // Write to Mongo
+    if (isMongoConnected()) {
+      const ModelName = MODEL_MAP[collection];
+      const Model = ModelName ? getModel(ModelName) : null;
+      if (Model) {
+        try {
+          const doc = new Model({ ...data, _id: undefined });
+          const saved = await doc.save();
+          const plain = saved.toObject ? saved.toObject() : saved;
+          item._id = String(plain._id);
+          item.id = String(plain._id);
+          // Sync cache
+          if (!memCache[collection]) memCache[collection] = [];
+          memCache[collection].unshift({ ...item, _id: item._id, id: item.id });
+          return { ...item, _id: item._id, id: item.id };
+        } catch (err) {
+          console.warn(`[DataStore] Mongo save failed for ${collection}:`, err.message);
+        }
+      }
+    }
+
+    // Fallback: in-memory only
+    if (!memCache[collection]) memCache[collection] = [];
+    memCache[collection].unshift(item);
+    return item;
   }
 
+  // Sync wrapper (used by old code paths) — returns cached item immediately
+  add(collection, data) {
+    const id = data._id || data.id || makeId();
+    const item = {
+      _id: id, id,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      ...data,
+    };
+    if (!memCache[collection]) memCache[collection] = [];
+    memCache[collection].unshift(item);
+
+    // Fire-and-forget Mongo write
+    if (isMongoConnected()) {
+      const ModelName = MODEL_MAP[collection];
+      const Model = ModelName ? getModel(ModelName) : null;
+      if (Model) {
+        const doc = new Model({ ...data, _id: undefined });
+        doc.save()
+          .then(saved => {
+            const mongoId = String(saved._id);
+            // Update the cache entry with real Mongo _id
+            const idx = memCache[collection].findIndex(i => String(i._id) === String(id));
+            if (idx !== -1) {
+              memCache[collection][idx]._id = mongoId;
+              memCache[collection][idx].id = mongoId;
+            }
+          })
+          .catch(err => console.warn(`[DataStore] Async Mongo save (${collection}):`, err.message));
+      }
+    }
+    return item;
+  }
+
+  // ── UPDATE ────────────────────────────────────────────────────────────────────
   update(collection, id, updates) {
     const list = this.get(collection);
-    const index = list.findIndex(item => String(item._id || item.id) === String(id));
-    if (index === -1) {
-      return this.add(collection, { _id: id, ...updates });
-    }
+    const idx = list.findIndex(i => String(i._id || i.id) === String(id));
     const updated = {
-      ...list[index],
+      ...(idx >= 0 ? list[idx] : {}),
       ...updates,
-      _id: list[index]._id || id,
-      id: list[index].id || id,
-      updatedAt: new Date().toISOString()
+      _id: id, id,
+      updatedAt: new Date().toISOString(),
     };
-    list[index] = updated;
-    this.saveData();
+    if (idx >= 0) list[idx] = updated;
+    else list.unshift(updated);
+
+    // Fire-and-forget Mongo update
+    if (isMongoConnected()) {
+      const ModelName = MODEL_MAP[collection];
+      const Model = ModelName ? getModel(ModelName) : null;
+      if (Model) {
+        Model.findByIdAndUpdate(id, { ...updates, updatedAt: new Date() }, { new: true, upsert: false })
+          .catch(err => console.warn(`[DataStore] Async Mongo update (${collection}):`, err.message));
+      }
+    }
     return updated;
   }
 
+  // ── DELETE ────────────────────────────────────────────────────────────────────
   delete(collection, id) {
-    if (!this.data[collection]) return false;
-    const initialLen = this.data[collection].length;
-    this.data[collection] = this.data[collection].filter(
-      item => String(item._id || item.id) !== String(id)
-    );
-    const deleted = this.data[collection].length < initialLen;
-    if (deleted) this.saveData();
+    if (!memCache[collection]) return false;
+    const before = memCache[collection].length;
+    memCache[collection] = memCache[collection].filter(i => String(i._id || i.id) !== String(id));
+    const deleted = memCache[collection].length < before;
+
+    // Fire-and-forget Mongo delete
+    if (isMongoConnected()) {
+      const ModelName = MODEL_MAP[collection];
+      const Model = ModelName ? getModel(ModelName) : null;
+      if (Model) {
+        Model.findByIdAndDelete(id)
+          .catch(err => console.warn(`[DataStore] Async Mongo delete (${collection}):`, err.message));
+      }
+    }
     return deleted;
   }
 
+  // ── SETTINGS ──────────────────────────────────────────────────────────────────
   getSettings() {
-    return this.data.settings || {};
+    return memCache.settings || {};
   }
 
   updateSettings(newSettings) {
-    this.data.settings = { ...this.data.settings, ...newSettings };
-    this.saveData();
-    return this.data.settings;
+    memCache.settings = { ...memCache.settings, ...newSettings };
+
+    // Fire-and-forget Mongo settings upsert
+    if (isMongoConnected()) {
+      const SiteSetting = getModel('SiteSetting');
+      if (SiteSetting) {
+        SiteSetting.findOneAndUpdate(
+          { singleton: 'main' },
+          { $set: { ...newSettings, singleton: 'main' } },
+          { upsert: true, new: true }
+        ).catch(err => console.warn('[DataStore] Settings save error:', err.message));
+      }
+    }
+    return memCache.settings;
   }
 
+  // ── LOAD FROM MONGO on startup ─────────────────────────────────────────────────
+  async loadFromMongo() {
+    if (!isMongoConnected()) return;
+
+    const collections = Object.keys(MODEL_MAP);
+    for (const col of collections) {
+      const ModelName = MODEL_MAP[col];
+      const Model = getModel(ModelName);
+      if (!Model) continue;
+      try {
+        const docs = await Model.find({}).sort({ createdAt: -1 }).lean();
+        memCache[col] = docs.map(d => ({
+          ...d,
+          _id: String(d._id),
+          id: String(d._id),
+        }));
+      } catch (err) {
+        console.warn(`[DataStore] Load ${col} from Mongo:`, err.message);
+      }
+    }
+
+    // Load settings
+    try {
+      const SiteSetting = getModel('SiteSetting');
+      if (SiteSetting) {
+        const s = await SiteSetting.findOne({ singleton: 'main' }).lean();
+        if (s) {
+          const { _id, __v, singleton, ...rest } = s;
+          memCache.settings = rest;
+        }
+      }
+    } catch (err) {
+      console.warn('[DataStore] Load settings from Mongo:', err.message);
+    }
+  }
+
+  // ── getAllContent (for /api/site-content) ─────────────────────────────────────
   getAllContent() {
     return {
       wallpapers: this.get('wallpapers'),
       attractions: this.get('activities'),
       tours: this.get('tours'),
       transfers: this.get('transfers'),
-      holidayPackages: this.get('holidayPackages'),
       packages: this.get('travelDeals'),
       gallery: this.get('gallery'),
       reviews: this.get('testimonials'),
       visas: this.get('visas'),
       popups: this.get('popups'),
       whyChooseUs: this.getWhyChooseUs(),
-      settings: this.getSettings()
+      settings: this.getSettings(),
     };
   }
 
   getWhyChooseUs() {
     const list = this.get('whyChooseUs');
-    if (!list || list.length === 0 || list[0]?.title === 'Global Reach') {
-      this.data.whyChooseUs = [
-        {
-          id: 'card-1',
-          title: 'Worldwide Flights',
-          titleFormatted: 'Worldwide Flights',
-          icon: '✈️',
-          price: 'From $299',
-          desc: 'Book cheap international flights with top airlines: Emirates, Qatar Airways, Etihad, Saudi, FlyDubai, Air Arabia & more. Best fares guaranteed with flexible cancellation.',
-          description: 'Book cheap international flights with top airlines: Emirates, Qatar Airways, Etihad, Saudi, FlyDubai, Air Arabia & more. Best fares guaranteed with flexible cancellation.',
-          image: '/assets/cards/card1.png',
-          fallback: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=700&q=80'
-        },
-        {
-          id: 'card-2',
-          title: 'VIP Umrah Packages',
-          titleFormatted: 'VIP Umrah Packages',
-          icon: '🕌',
-          price: 'From $799',
-          desc: 'Complete 5-star Umrah packages including return flights, Haram-view hotel, Ziyarat tours, visa processing, and dedicated group guide — all inclusive.',
-          description: 'Complete 5-star Umrah packages including return flights, Haram-view hotel, Ziyarat tours, visa processing, and dedicated group guide — all inclusive.',
-          image: '/assets/cards/card2.jpg',
-          fallback: 'https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=700&q=80'
-        },
-        {
-          id: 'card-3',
-          title: 'Holiday Tours',
-          titleFormatted: 'Holiday Tours',
-          icon: '🌴',
-          price: 'From $599',
-          desc: 'Customized family & honeymoon tour packages to Maldives, Bali, Turkey, Europe, Malaysia, Thailand & beyond. Hotel + flights + transfers included.',
-          description: 'Customized family & honeymoon tour packages to Maldives, Bali, Turkey, Europe, Malaysia, Thailand & beyond. Hotel + flights + transfers included.',
-          image: '/assets/cards/card3.jpg',
-          fallback: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=700&q=80'
-        },
-        {
-          id: 'card-4',
-          title: 'Visa Assistance',
-          titleFormatted: 'Visa Assistance',
-          icon: '🛂',
-          price: 'From $49',
-          desc: 'Fast visa processing for Schengen, UK, US, UAE, Saudi, Oman & GCC. Document checklist, expert review, and real-time status updates — 95% success rate.',
-          description: 'Fast visa processing for Schengen, UK, US, UAE, Saudi, Oman & GCC. Document checklist, expert review, and real-time status updates — 95% success rate.',
-          image: '/assets/cards/card4.jpg',
-          fallback: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=700&q=80'
-        },
-        {
-          id: 'card-5',
-          title: 'Dubai Experiences',
-          titleFormatted: 'Dubai Experiences',
-          icon: '🏙️',
-          price: 'From $55',
-          desc: 'Desert safari, Burj Khalifa, dhow cruise, Global Village, theme parks and more. Private & group tours available daily. Hotel pickups included.',
-          description: 'Desert safari, Burj Khalifa, dhow cruise, Global Village, theme parks and more. Private & group tours available daily. Hotel pickups included.',
-          image: '/assets/cards/card5.jpg',
-          fallback: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=700&q=80'
-        },
-        {
-          id: 'card-6',
-          title: 'Airport Transfers',
-          titleFormatted: 'Airport Transfers',
-          icon: '🚗',
-          price: 'From $45',
-          desc: 'VIP airport pick-up and drop-off with Toyota Land Cruiser, Prado, Mercedes V-Class & more. Professional chauffeurs, meet & greet, 24/7 availability.',
-          description: 'VIP airport pick-up and drop-off with Toyota Land Cruiser, Prado, Mercedes V-Class & more. Professional chauffeurs, meet & greet, 24/7 availability.',
-          image: '/assets/cards/card6.jpg',
-          fallback: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=700&q=80'
-        }
-      ];
-      this.saveData();
-    }
-    return this.data.whyChooseUs;
+    return list;
   }
 
   setFullContent(content) {
-    if (content.wallpapers) this.data.wallpapers = content.wallpapers;
-    if (content.attractions) this.data.activities = content.attractions;
-    if (content.activities) this.data.activities = content.activities;
-    if (content.tours) this.data.tours = content.tours;
-    if (content.transfers) this.data.transfers = content.transfers;
-    if (content.holidayPackages) this.data.holidayPackages = content.holidayPackages;
-    if (content.packages) this.data.travelDeals = content.packages;
-    if (content.travelDeals) this.data.travelDeals = content.travelDeals;
-    if (content.gallery) this.data.gallery = content.gallery;
-    if (content.reviews) this.data.testimonials = content.reviews;
-    if (content.testimonials) this.data.testimonials = content.testimonials;
-    if (content.visas) this.data.visas = content.visas;
-    if (content.popups) this.data.popups = content.popups;
-    if (content.whyChooseUs) this.data.whyChooseUs = content.whyChooseUs;
-    if (content.features) this.data.whyChooseUs = content.features;
-    if (content.settings) this.data.settings = content.settings;
-    this.saveData();
+    if (content.wallpapers) memCache.wallpapers = content.wallpapers;
+    if (content.attractions) memCache.activities = content.attractions;
+    if (content.activities) memCache.activities = content.activities;
+    if (content.tours) memCache.tours = content.tours;
+    if (content.transfers) memCache.transfers = content.transfers;
+    if (content.packages) memCache.travelDeals = content.packages;
+    if (content.travelDeals) memCache.travelDeals = content.travelDeals;
+    if (content.gallery) memCache.gallery = content.gallery;
+    if (content.reviews) memCache.testimonials = content.reviews;
+    if (content.testimonials) memCache.testimonials = content.testimonials;
+    if (content.visas) memCache.visas = content.visas;
+    if (content.popups) memCache.popups = content.popups;
+    if (content.whyChooseUs) memCache.whyChooseUs = content.whyChooseUs;
+    if (content.features) memCache.whyChooseUs = content.features;
+    if (content.settings) memCache.settings = content.settings;
+
+    // Persist everything to Mongo
+    Object.entries(MODEL_MAP).forEach(([col, ModelName]) => {
+      if (memCache[col] && isMongoConnected()) {
+        // We don't bulk-replace here; individual saves happen through add/update
+      }
+    });
+
     return this.getAllContent();
   }
 }

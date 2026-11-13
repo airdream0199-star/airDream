@@ -1,89 +1,79 @@
 const Activity = require('../models/Activity');
 const store = require('../utils/dataStore');
+const mongoose = require('mongoose');
+
+const dbOk = () => mongoose.connection.readyState === 1;
 
 exports.getAllActivities = async (req, res) => {
   try {
-    const { category, isPublic } = req.query;
-    const query = {};
-    if (category) query.category = category;
-    if (isPublic === 'true') query.isActive = true;
-
-    let activities = [];
-    try {
-      activities = await Activity.find(query).sort({ createdAt: -1 });
-    } catch (e) {
-      console.warn('[Activity DB fallback]', e.message);
+    if (dbOk()) {
+      const query = {};
+      if (req.query.category) query.category = req.query.category;
+      if (req.query.isPublic === 'true') query.isActive = true;
+      const list = await Activity.find(query).sort({ createdAt: -1 }).lean();
+      return res.json(list.map(d => ({ ...d, _id: String(d._id), id: String(d._id) })));
     }
-
-    if (!activities || activities.length === 0) {
-      activities = store.get('activities');
-    }
-    res.json(activities);
-  } catch (error) {
-    res.json(store.get('activities') || []);
+    return res.json(store.get('activities'));
+  } catch (err) {
+    return res.json(store.get('activities'));
   }
 };
 
 exports.getActivityById = async (req, res) => {
   try {
-    let activity = null;
-    try {
-      activity = await Activity.findById(req.params.id);
-    } catch (e) {}
-
-    if (!activity) {
-      activity = store.getById('activities', req.params.id);
+    if (dbOk()) {
+      const doc = await Activity.findById(req.params.id).lean();
+      if (doc) return res.json({ ...doc, _id: String(doc._id), id: String(doc._id) });
     }
-
-    if (!activity) return res.status(404).json({ message: 'Activity not found' });
-    res.json(activity);
-  } catch (error) {
-    const act = store.getById('activities', req.params.id);
-    if (act) return res.json(act);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    const cached = store.getById('activities', req.params.id);
+    if (cached) return res.json(cached);
+    return res.status(404).json({ message: 'Activity not found' });
+  } catch (err) {
+    const cached = store.getById('activities', req.params.id);
+    if (cached) return res.json(cached);
+    return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
 exports.createActivity = async (req, res) => {
   try {
-    const storedItem = store.add('activities', req.body);
-    let savedActivity = storedItem;
-    try {
-      const newActivity = new Activity({ ...req.body, _id: storedItem._id });
-      savedActivity = await newActivity.save();
-    } catch (dbErr) {
-      console.warn('[Activity DB save fallback]', dbErr.message);
+    if (dbOk()) {
+      const doc = new Activity(req.body);
+      const saved = await doc.save();
+      const plain = { ...saved.toObject(), _id: String(saved._id), id: String(saved._id) };
+      store.get('activities').unshift(plain);
+      return res.status(201).json(plain);
     }
-    res.status(201).json(savedActivity || storedItem);
-  } catch (error) {
-    res.status(400).json({ message: 'Error creating activity', error: error.message });
+    return res.status(201).json(store.add('activities', req.body));
+  } catch (err) {
+    return res.status(400).json({ message: 'Error creating activity', error: err.message });
   }
 };
 
 exports.updateActivity = async (req, res) => {
   try {
-    const updatedStore = store.update('activities', req.params.id, req.body);
-    let activity = updatedStore;
-    try {
-      activity = await Activity.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    } catch (dbErr) {
-      console.warn('[Activity DB update fallback]', dbErr.message);
+    if (dbOk()) {
+      const updated = await Activity.findByIdAndUpdate(req.params.id, req.body, { new: true }).lean();
+      if (updated) {
+        const plain = { ...updated, _id: String(updated._id), id: String(updated._id) };
+        const cache = store.get('activities');
+        const idx = cache.findIndex(i => String(i._id) === String(updated._id));
+        if (idx >= 0) cache[idx] = plain; else cache.unshift(plain);
+        return res.json(plain);
+      }
     }
-    res.json(activity || updatedStore);
-  } catch (error) {
-    const updatedStore = store.update('activities', req.params.id, req.body);
-    res.json(updatedStore);
+    return res.json(store.update('activities', req.params.id, req.body));
+  } catch (err) {
+    return res.status(400).json({ message: 'Error updating activity', error: err.message });
   }
 };
 
 exports.deleteActivity = async (req, res) => {
   try {
+    if (dbOk()) await Activity.findByIdAndDelete(req.params.id);
     store.delete('activities', req.params.id);
-    try {
-      await Activity.findByIdAndDelete(req.params.id);
-    } catch (e) {}
-    res.json({ message: 'Activity deleted successfully', id: req.params.id });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return res.json({ message: 'Activity deleted successfully', id: req.params.id });
+  } catch (err) {
+    return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
