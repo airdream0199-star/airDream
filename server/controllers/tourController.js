@@ -8,6 +8,7 @@ exports.getAllTours = async (req, res) => {
   try {
     if (dbOk()) {
       const query = {};
+      if (req.query.section) query.section = req.query.section;
       if (req.query.category) query.category = req.query.category;
       if (req.query.isPublic === 'true') query.isActive = true;
       const tours = await Tour.find(query).sort({ createdAt: -1 }).lean();

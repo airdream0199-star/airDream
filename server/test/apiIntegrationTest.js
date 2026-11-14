@@ -41,6 +41,12 @@ async function testApi() {
     console.log('Tours API status:', toursData.success, 'Count:', toursData.data.length);
     if (!toursData.success) throw new Error('Tours endpoint failed');
 
+    // 3b. Section filtering verification
+    const dubaiToursRes = await fetch(`${baseUrl}/tours?section=dubai`);
+    const dubaiToursData = await dubaiToursRes.json();
+    console.log('Dubai Section Tours Count:', dubaiToursData.data?.length);
+    if (!dubaiToursData.success) throw new Error('Section filter failed');
+
     // 4. Public Enquiry submission
     const enquiryPayload = {
       fullName: 'Integration Test User',

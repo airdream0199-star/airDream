@@ -3,6 +3,7 @@ const { body } = require('express-validator');
 const tourValidator = [
   body('title').trim().notEmpty().withMessage('Tour title is required'),
   body('price').notEmpty().withMessage('Tour price is required'),
+  body('section').optional().trim(),
 ];
 
 const activityValidator = [

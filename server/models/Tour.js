@@ -26,6 +26,10 @@ const tourSchema = new mongoose.Schema({
     days: Number,
     nights: Number
   },
+  section: {
+    type: String,
+    default: 'dubai'
+  },
   category: {
     type: String
   },

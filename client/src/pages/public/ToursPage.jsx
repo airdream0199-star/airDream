@@ -31,7 +31,9 @@ export default function ToursPage() {
     const matchSearch =
       !searchTerm ||
       tour.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tour.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      tour.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tour.section?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tour.location?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchCat && matchSearch;
   });
 

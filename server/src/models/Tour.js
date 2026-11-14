@@ -59,6 +59,12 @@ const tourSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       default: () => ({ days: 1, nights: 0 }),
     },
+    section: {
+      type: String,
+      trim: true,
+      default: 'dubai',
+      index: true,
+    },
     category: {
       type: String,
       trim: true,

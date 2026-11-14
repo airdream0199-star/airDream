@@ -7,8 +7,21 @@ exports.getAllTours = async (req, res, next) => {
     if (req.query.isPublic === 'true') {
       query.isActive = true;
     }
+    if (req.query.section) {
+      query.section = req.query.section;
+    }
     if (req.query.category) {
       query.category = req.query.category;
+    }
+    if (req.query.search) {
+      const searchRegex = new RegExp(req.query.search.trim(), 'i');
+      query.$or = [
+        { title: searchRegex },
+        { location: searchRegex },
+        { description: searchRegex },
+        { category: searchRegex },
+        { section: searchRegex },
+      ];
     }
 
     const page = parseInt(req.query.page, 10);
