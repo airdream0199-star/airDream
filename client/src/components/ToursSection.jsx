@@ -43,7 +43,7 @@ const TOUR_SECTIONS_CONFIG = [
     sectionKey: 'dubai',
     badge: 'Dubai Iconic Experiences',
     icon: 'fa-city',
-    title: '1. Top Places to Visit in Dubai',
+    title: 'Top Places to Visit in Dubai',
     subtitle:
       'From thrilling desert dune bashing to Burj Khalifa heights, luxury yacht cruises, and historical creek souks.',
     keywords: ['dubai', 'desert', 'burj', 'marina', 'safari'],
@@ -53,7 +53,7 @@ const TOUR_SECTIONS_CONFIG = [
     sectionKey: 'abu-dhabi',
     badge: 'Capital Splendor & Thrills',
     icon: 'fa-mosque',
-    title: '2. Abu Dhabi Awaits You',
+    title: 'Abu Dhabi Awaits You',
     subtitle:
       'Experience the architectural marvel of Sheikh Zayed Grand Mosque, Louvre art, Ferrari World, and royal palaces.',
     keywords: ['abu dhabi', 'sheikh zayed', 'ferrari', 'yas', 'qasr'],
@@ -63,7 +63,7 @@ const TOUR_SECTIONS_CONFIG = [
     sectionKey: 'baku',
     badge: 'Azerbaijan Jewels',
     icon: 'fa-mountain-sun',
-    title: '3. Explore Beautiful Baku',
+    title: 'Explore Beautiful Baku',
     subtitle:
       'Step into ancient cobblestone alleys, futuristic Flame Towers, bubbling mud volcanoes, and snowy Shahdag slopes.',
     keywords: ['baku', 'azerbaijan', 'shahdag', 'gabala'],
@@ -73,7 +73,7 @@ const TOUR_SECTIONS_CONFIG = [
     sectionKey: 'umrah',
     badge: 'Sacred Pilgrimage Services',
     icon: 'fa-kaaba',
-    title: '4. Your Perfect Umrah Journey',
+    title: 'Your Perfect Umrah Journey',
     subtitle:
       'VIP 5-star packages near the Haramain, private GMC transport, certified Mutawwif guidance, and Ziyarat tours.',
     keywords: ['umrah', 'makkah', 'madinah', 'ziyarat', 'haram'],
@@ -83,7 +83,7 @@ const TOUR_SECTIONS_CONFIG = [
     sectionKey: 'visa-tickets',
     badge: 'Visas & Travel Documentation',
     icon: 'fa-passport',
-    title: '5. Visit Visa and Tickets',
+    title: 'Visit Visa and Tickets',
     subtitle:
       'Fast 24-48h UAE visit visas, Schengen priority assistance, Saudi e-visas, and worldwide airline ticket bookings.',
     keywords: ['visa', 'ticket', 'flight', 'entry'],
@@ -93,7 +93,7 @@ const TOUR_SECTIONS_CONFIG = [
     sectionKey: 'world-tours',
     badge: 'Global Dream Destinations',
     icon: 'fa-earth-americas',
-    title: '6. World Best Places Tours',
+    title: 'World Best Places Tours',
     subtitle:
       'Overwater villa retreats in Maldives, Swiss Alpine rail scenic journeys, tropical Bali, and Cappadocia skies.',
     keywords: ['maldives', 'swiss', 'bali', 'turkey', 'salalah', 'world'],
@@ -403,7 +403,7 @@ export default function ToursSection({ onBookTour }) {
                   }}
                 >
                   <i className={`fa-solid ${s.icon}`} style={{ color: '#0284c7' }}></i>
-                  <span>{idx + 1}. {s.title.replace(/^\d+\.\s*/, '')}</span>
+                  <span>{s.title}</span>
                 </button>
               ))}
             </div>

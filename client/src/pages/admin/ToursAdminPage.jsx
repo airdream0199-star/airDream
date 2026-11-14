@@ -313,7 +313,7 @@ export default function ToursAdminPage() {
               }}
             >
               <i className={`fa-solid ${sec.icon}`} style={{ color: sec.color }}></i>
-              <span>{idx + 1}. {sec.short} ({count})</span>
+              <span>{sec.short} ({count})</span>
             </button>
           );
         })}
@@ -578,9 +578,9 @@ export default function ToursAdminPage() {
                     outline: 'none',
                   }}
                 >
-                  {TOUR_SECTIONS.map((sec, idx) => (
+                  {TOUR_SECTIONS.map((sec) => (
                     <option key={sec.id} value={sec.id}>
-                      {idx + 1}. {sec.title}
+                      {sec.title}
                     </option>
                   ))}
                 </select>
