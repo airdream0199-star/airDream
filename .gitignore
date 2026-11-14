@@ -1,18 +1,25 @@
 # Dependencies
 node_modules/
+.vite/
+client/node_modules/
+server/node_modules/
 .pnp
 .pnp.js
 
 # Production build
 client/dist/
 dist/
+.dist/
+*.zip
 
 # Local Environment variables
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+*.env
+client/.env
+client/.env.*
+server/.env
+server/.env.*
 
 # Logs
 npm-debug.log*
@@ -30,3 +37,5 @@ Thumbs.db
 server/uploads/*
 !server/uploads/.gitkeep
 
+# Legacy data store backup
+server/data-store.json.bak*

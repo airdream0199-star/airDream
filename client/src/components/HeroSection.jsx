@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import api from "../utils/api";
+import { useSiteData } from "../context/SiteDataContext";
+import publicApi from "../services/publicApi";
 
 const DEFAULT_SLIDES = [
   {
@@ -54,21 +55,33 @@ const DEFAULT_SLIDES = [
 
 const formatSlide = (item, idx) => {
   let titleNode = item.title;
-  if (item.highlight) {
+  if (item.highlight && typeof item.title === "string") {
     titleNode = (
       <>
-        {item.title} <span className="highlight-text">{item.highlight}</span>
+        {item.title}{" "}
+        <span className="highlight-text">{item.highlight}</span>
       </>
     );
   }
 
+  // Fallback background image if user provided none or empty
+  const fallbackBg =
+    DEFAULT_SLIDES[idx % DEFAULT_SLIDES.length]?.bg ||
+    "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1920&q=80";
+
+  const rawBg = item.image || item.bg;
+  const bg =
+    rawBg && typeof rawBg === "string" && rawBg.trim().length > 0
+      ? rawBg.trim()
+      : fallbackBg;
+
   return {
-    id: item.id || item._id || `slide-${idx}`,
+    id: item._id || item.id || `slide-${idx}`,
     badge: item.badge || "Premium Flight Booking",
     badgeIcon: item.badgeIcon || "fa-plane",
-    title: titleNode,
+    title: titleNode || "Fly Anywhere at the Best Fares",
     desc: item.desc || item.description || "",
-    bg: item.image || item.bg || DEFAULT_SLIDES[idx % DEFAULT_SLIDES.length].bg,
+    bg,
     primaryBtnText: item.primaryBtnText || "Book Your Flight",
     primaryBtnIcon: item.primaryBtnIcon || "fa-ticket",
     primaryBtnLink: item.primaryBtnLink || "#packages",
@@ -77,65 +90,65 @@ const formatSlide = (item, idx) => {
 };
 
 export default function HeroSection({ onOpenQuote }) {
-  const [slides, setSlides] = useState(DEFAULT_SLIDES);
+  const { siteData } = useSiteData();
+  const [slides, setSlides] = useState(() => {
+    const initial = siteData?.wallpapers || siteData?.heroSlides;
+    if (Array.isArray(initial) && initial.length > 0) {
+      return initial.map(formatSlide);
+    }
+    return DEFAULT_SLIDES;
+  });
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  const loadWallpapers = useCallback(async () => {
-    // 1. Check cached local storage first for instant response
+  const loadFreshWallpapers = useCallback(async () => {
     try {
-      const cached = localStorage.getItem("air_dream_site_data_v2");
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed?.wallpapers && parsed.wallpapers.length > 0) {
-          setSlides(parsed.wallpapers.map(formatSlide));
-        }
-      }
-    } catch (e) {}
-
-    // 2. Fetch fresh from backend API
-    try {
-      const res = await api.get("/wallpapers");
-      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
-        setSlides(res.data.map(formatSlide));
+      const data = await publicApi.getHeroSlides();
+      const list = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.data)
+        ? data.data
+        : [];
+      if (list.length > 0) {
+        setSlides(list.map(formatSlide));
         return;
       }
     } catch (err) {
-      // Try unified site-content endpoint as backup
-      try {
-        const scRes = await api.get("/site-content");
-        if (scRes.data?.wallpapers?.length > 0) {
-          setSlides(scRes.data.wallpapers.map(formatSlide));
-        }
-      } catch (e) {}
+      console.warn("[HeroSection] Error loading hero slides directly:", err);
     }
+
+    try {
+      const scData = await publicApi.getSiteContent();
+      const wallpapers = scData?.wallpapers || scData?.heroSlides;
+      if (Array.isArray(wallpapers) && wallpapers.length > 0) {
+        setSlides(wallpapers.map(formatSlide));
+      }
+    } catch (e) {}
   }, []);
 
-  // Initial fetch and real-time live sync listeners
+  // Sync with global siteData from SiteDataContext
   useEffect(() => {
-    loadWallpapers();
+    const list = siteData?.wallpapers || siteData?.heroSlides;
+    if (Array.isArray(list) && list.length > 0) {
+      setSlides(list.map(formatSlide));
+    }
+  }, [siteData]);
 
-    const handleUpdate = (e) => {
-      if (
-        e.detail?.wallpapers &&
-        Array.isArray(e.detail.wallpapers) &&
-        e.detail.wallpapers.length > 0
-      ) {
-        setSlides(e.detail.wallpapers.map(formatSlide));
-      } else {
-        loadWallpapers();
-      }
+  // Live real-time event listeners for instant admin updates
+  useEffect(() => {
+    const handleUpdate = () => {
+      loadFreshWallpapers();
     };
 
-    window.addEventListener("airdream-data-updated", handleUpdate);
     window.addEventListener("airdream:data_updated", handleUpdate);
+    window.addEventListener("airdream-data-updated", handleUpdate);
     window.addEventListener("storage", handleUpdate);
 
     return () => {
-      window.removeEventListener("airdream-data-updated", handleUpdate);
       window.removeEventListener("airdream:data_updated", handleUpdate);
+      window.removeEventListener("airdream-data-updated", handleUpdate);
       window.removeEventListener("storage", handleUpdate);
     };
-  }, [loadWallpapers]);
+  }, [loadFreshWallpapers]);
 
   // Slideshow auto-advance interval
   useEffect(() => {
@@ -147,11 +160,12 @@ export default function HeroSection({ onOpenQuote }) {
   }, [slides.length]);
 
   const scrollToLink = (e, link = "#packages") => {
-    e.preventDefault();
-    const target = link.startsWith("#") ? link : "#packages";
-    const el =
-      document.querySelector(target) || document.querySelector("#why-choose");
-    if (el) el.scrollIntoView({ behavior: "smooth" });
+    if (link && link.startsWith("#")) {
+      e.preventDefault();
+      const el =
+        document.querySelector(link) || document.querySelector("#why-choose");
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   const activeIndex = currentSlide % (slides.length || 1);

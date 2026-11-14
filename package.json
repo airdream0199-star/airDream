@@ -3,12 +3,13 @@
   "version": "1.0.0",
   "description": "Air Dream Travel & Tourism - Full Stack MERN Travel Agency Website",
   "scripts": {
-    "predev": "node copy-cards.js",
     "client": "cd client && npm run dev",
     "server": "cd server && npm run dev",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "install-all": "npm install && cd client && npm install && cd ../server && npm install",
-    "seed": "cd server && node seed.js",
+    "seed": "cd server && node src/scripts/seedAdmin.js",
+    "migrate": "cd server && node src/scripts/migrateData.js",
+    "test": "cd server && npm test",
     "build": "cd client && npm run build"
   },
   "dependencies": {
@@ -24,7 +25,12 @@
     "multer": "^1.4.5-lts.1",
     "multer-storage-cloudinary": "^4.0.0"
   },
-  "keywords": ["travel", "tourism", "dubai", "mern"],
+  "keywords": [
+    "travel",
+    "tourism",
+    "dubai",
+    "mern"
+  ],
   "author": "Air Dream Travel & Tourism",
   "license": "ISC"
 }

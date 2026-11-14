@@ -1,89 +1,22 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import api from '../utils/api';
+import publicApi from '../services/publicApi';
 
-const STORAGE_KEY = 'air_dream_site_data_v2';
 const SiteDataContext = createContext();
-
-export const DEFAULT_WHY_CHOOSE_US = [
-  {
-    id: 1,
-    title: 'Worldwide Flights',
-    titleFormatted: 'Worldwide Flights',
-    icon: '✈️',
-    price: 'From $299',
-    desc: 'Book cheap international flights with top airlines: Emirates, Qatar Airways, Etihad, Saudi, FlyDubai, Air Arabia & more. Best fares guaranteed with flexible cancellation.',
-    description: 'Book cheap international flights with top airlines: Emirates, Qatar Airways, Etihad, Saudi, FlyDubai, Air Arabia & more. Best fares guaranteed with flexible cancellation.',
-    image: '/assets/cards/card1.png',
-    fallback: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=700&q=80'
-  },
-  {
-    id: 2,
-    title: 'VIP Umrah Packages',
-    titleFormatted: 'VIP Umrah Packages',
-    icon: '🕌',
-    price: 'From $799',
-    desc: 'Complete 5-star Umrah packages including return flights, Haram-view hotel, Ziyarat tours, visa processing, and dedicated group guide — all inclusive.',
-    description: 'Complete 5-star Umrah packages including return flights, Haram-view hotel, Ziyarat tours, visa processing, and dedicated group guide — all inclusive.',
-    image: '/assets/cards/card2.jpg',
-    fallback: 'https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=700&q=80'
-  },
-  {
-    id: 3,
-    title: 'Holiday Tours',
-    titleFormatted: 'Holiday Tours',
-    icon: '🌴',
-    price: 'From $599',
-    desc: 'Customized family & honeymoon tour packages to Maldives, Bali, Turkey, Europe, Malaysia, Thailand & beyond. Hotel + flights + transfers included.',
-    description: 'Customized family & honeymoon tour packages to Maldives, Bali, Turkey, Europe, Malaysia, Thailand & beyond. Hotel + flights + transfers included.',
-    image: '/assets/cards/card3.jpg',
-    fallback: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=700&q=80'
-  },
-  {
-    id: 4,
-    title: 'Visa Assistance',
-    titleFormatted: 'Visa Assistance',
-    icon: '🛂',
-    price: 'From $49',
-    desc: 'Fast visa processing for Schengen, UK, US, UAE, Saudi, Oman & GCC. Document checklist, expert review, and real-time status updates — 95% success rate.',
-    description: 'Fast visa processing for Schengen, UK, US, UAE, Saudi, Oman & GCC. Document checklist, expert review, and real-time status updates — 95% success rate.',
-    image: '/assets/cards/card4.jpg',
-    fallback: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=700&q=80'
-  },
-  {
-    id: 5,
-    title: 'Dubai Experiences',
-    titleFormatted: 'Dubai Experiences',
-    icon: '🏙️',
-    price: 'From $55',
-    desc: 'Desert safari, Burj Khalifa, dhow cruise, Global Village, theme parks and more. Private & group tours available daily. Hotel pickups included.',
-    description: 'Desert safari, Burj Khalifa, dhow cruise, Global Village, theme parks and more. Private & group tours available daily. Hotel pickups included.',
-    image: '/assets/cards/card5.jpg',
-    fallback: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=700&q=80'
-  },
-  {
-    id: 6,
-    title: 'Airport Transfers',
-    titleFormatted: 'Airport Transfers',
-    icon: '🚗',
-    price: 'From $45',
-    desc: 'VIP airport pick-up and drop-off with Toyota Land Cruiser, Prado, Mercedes V-Class & more. Professional chauffeurs, meet & greet, 24/7 availability.',
-    description: 'VIP airport pick-up and drop-off with Toyota Land Cruiser, Prado, Mercedes V-Class & more. Professional chauffeurs, meet & greet, 24/7 availability.',
-    image: '/assets/cards/card6.jpg',
-    fallback: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=700&q=80'
-  }
-];
 
 export function SiteDataProvider({ children }) {
   const [siteData, setSiteData] = useState({
     wallpapers: [],
     attractions: [],
+    activities: [],
     tours: [],
     transfers: [],
     holidayPackages: [],
     packages: [],
+    travelDeals: [],
     gallery: [],
     reviews: [],
-    whyChooseUs: DEFAULT_WHY_CHOOSE_US,
+    testimonials: [],
+    whyChooseUs: [],
     settings: {
       brandName: 'AIR DREAM',
       brandTagline: 'TRAVEL TOURISM LLC',
@@ -92,257 +25,68 @@ export function SiteDataProvider({ children }) {
       whatsapp: '971588338927',
       email: 'info@airdreamtravel.com',
       address: 'Office 402, Al Asmawi Building, Sheikh Zayed Road, Dubai, UAE',
-      aboutQuote: 'We, at Air Dream Travel Tourism LLC, cater to our clients a lifestyle at its best where they can feel the pulse of Dubai and the unseen facets of the world, through our exclusive guided tours and other value-added services.',
+      aboutQuote:
+        'We, at Air Dream Travel Tourism LLC, cater to our clients a lifestyle at its best where they can feel the pulse of Dubai and the unseen facets of the world, through our exclusive guided tours and other value-added services.',
       aboutArchImg: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80',
       bubble1Img: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=400&q=80',
       bubble2Img: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=300&q=80',
-      bubble3Img: 'https://images.unsplash.com/photo-1580674684081-7617fbf3d745?auto=format&fit=crop&w=400&q=80'
-    }
+      bubble3Img: 'https://images.unsplash.com/photo-1580674684081-7617fbf3d745?auto=format&fit=crop&w=400&q=80',
+    },
   });
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const fetchSiteData = useCallback(async () => {
     try {
-      // 1. Try unified site-content endpoint from backend
-      const res = await api.get('/site-content');
-      if (res.data && Object.keys(res.data).length > 0) {
-        setSiteData((prev) => {
-          const incomingCards = res.data.whyChooseUs;
-          const validCards = (incomingCards && incomingCards.length > 0 && incomingCards[0]?.title !== 'Global Reach' && incomingCards[0]?.title !== 'Tour Guide')
-            ? incomingCards
-            : DEFAULT_WHY_CHOOSE_US;
-          const merged = { ...prev, ...res.data, whyChooseUs: validCards };
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-          return merged;
-        });
-        setLoading(false);
-        return;
+      setLoading(true);
+      setError(null);
+      const data = await publicApi.getSiteContent();
+      if (data) {
+        setSiteData((prev) => ({
+          ...prev,
+          ...data,
+          wallpapers: data.wallpapers || data.heroSlides || prev.wallpapers,
+          heroSlides: data.heroSlides || data.wallpapers || prev.heroSlides || prev.wallpapers,
+          attractions: data.activities || data.attractions || prev.attractions,
+          reviews: data.testimonials || data.reviews || prev.reviews,
+        }));
       }
     } catch (err) {
-      console.warn('[SiteData] /api/site-content not available, fetching individual collections:', err.message);
-    }
-
-    // 2. Fallback to individual REST endpoints
-    try {
-      const [actRes, tourRes, dealRes, testRes, whyRes, holRes, wallRes, transRes, galRes, setRes] = await Promise.allSettled([
-        api.get('/activities'),
-        api.get('/tours'),
-        api.get('/travel-deals'),
-        api.get('/testimonials'),
-        api.get('/why-choose-us'),
-        api.get('/holiday-packages'),
-        api.get('/wallpapers'),
-        api.get('/transfers'),
-        api.get('/gallery'),
-        api.get('/settings')
-      ]);
-
-      setSiteData((prev) => {
-        const updated = { ...prev };
-
-        if (whyRes.status === 'fulfilled' && Array.isArray(whyRes.value.data) && whyRes.value.data.length > 0) {
-          updated.whyChooseUs = whyRes.value.data;
-        }
-
-        if (holRes && holRes.status === 'fulfilled' && Array.isArray(holRes.value.data) && holRes.value.data.length > 0) {
-          updated.holidayPackages = holRes.value.data;
-        }
-
-        if (wallRes.status === 'fulfilled' && Array.isArray(wallRes.value.data) && wallRes.value.data.length > 0) {
-          updated.wallpapers = wallRes.value.data;
-        }
-
-        if (transRes.status === 'fulfilled' && Array.isArray(transRes.value.data) && transRes.value.data.length > 0) {
-          updated.transfers = transRes.value.data;
-        }
-
-        if (galRes.status === 'fulfilled' && Array.isArray(galRes.value.data) && galRes.value.data.length > 0) {
-          updated.gallery = galRes.value.data;
-        }
-
-        if (setRes.status === 'fulfilled' && setRes.value.data && Object.keys(setRes.value.data).length > 0) {
-          updated.settings = { ...updated.settings, ...setRes.value.data };
-        }
-
-        if (actRes.status === 'fulfilled' && Array.isArray(actRes.value.data) && actRes.value.data.length > 0) {
-          updated.attractions = actRes.value.data.map((a) => ({
-            id: a.id || a._id,
-            name: a.name || a.title,
-            activities: typeof a.activities === 'string' ? a.activities : `${a.activities || 50} activities`,
-            price: typeof a.price === 'number' ? `$${a.price}` : (a.price || '$95'),
-            image: (a.images && a.images[0]) || a.image || ''
-          }));
-        }
-
-        if (tourRes.status === 'fulfilled' && Array.isArray(tourRes.value.data) && tourRes.value.data.length > 0) {
-          updated.tours = tourRes.value.data.map((t) => ({
-            id: t.id || t._id,
-            title: t.title,
-            location: t.location || 'Dubai Desert',
-            duration: t.duration || '08-Hrs',
-            price: typeof t.price === 'number' ? `$${t.price}` : (t.price || '$120'),
-            rating: t.rating || 5.0,
-            image: (t.images && t.images[0]) || t.image || ''
-          }));
-        }
-
-        if (dealRes.status === 'fulfilled' && Array.isArray(dealRes.value.data) && dealRes.value.data.length > 0) {
-          updated.packages = dealRes.value.data.map((p) => ({
-            id: p.id || p._id,
-            title: p.title,
-            category: (p.category || 'tours').toLowerCase().includes('umrah') ? 'umrah' : ((p.category || '').toLowerCase().includes('flight') ? 'flights' : 'tours'),
-            duration: p.duration || '5 Days / 4 Nights',
-            badge: p.discount || p.badge || 'Popular',
-            badgeClass: 'gold',
-            price: typeof p.price === 'number' ? `$${p.price}` : (p.price || '$649'),
-            image: (p.images && p.images[0]) || p.image || '',
-            featured: Boolean(p.featured || p.isFeatured),
-            isFeatured: Boolean(p.featured || p.isFeatured),
-            inclusions: p.inclusions || p.features || p.included || []
-          }));
-        }
-
-        if (testRes.status === 'fulfilled' && Array.isArray(testRes.value.data) && testRes.value.data.length > 0) {
-          updated.reviews = testRes.value.data.map((r) => ({
-            id: r.id || r._id,
-            name: r.name,
-            avatar: r.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
-            stars: r.rating || 5,
-            quote: r.review || r.quote || 'Outstanding hospitality and flawless arrangements.'
-          }));
-        }
-
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-        return updated;
-      });
-    } catch (e) {
-      console.warn('[SiteData] Fallback fetch error:', e);
+      console.warn('[SiteData] Error loading authoritative site data from API:', err.message);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Initial load
   useEffect(() => {
-    // Check localStorage cache first for instant rendering
-    const cached = localStorage.getItem(STORAGE_KEY);
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached);
-          if (parsed.whyChooseUs && (parsed.whyChooseUs[0]?.title === 'Global Reach' || parsed.whyChooseUs[0]?.title === 'Tour Guide')) {
-            parsed.whyChooseUs = DEFAULT_WHY_CHOOSE_US;
-          }
-          if (parsed.transfers && (parsed.transfers[0]?.image?.endsWith('.svg') || parsed.transfers.length === 0)) {
-            parsed.transfers = [
-              {
-                id: 'tr-1',
-                title: 'Toyota Hyryder – Urban SUV',
-                passengers: 4,
-                luggage: 3,
-                price: '$50',
-                image: '/assets/vehicles/toyota-hyryder.jpg'
-              },
-              {
-                id: 'tr-2',
-                title: 'Toyota Fortuner – 4WD SUV',
-                passengers: 6,
-                luggage: 4,
-                price: '$65',
-                image: '/assets/vehicles/toyota-fortuner.jpg'
-              },
-              {
-                id: 'tr-3',
-                title: 'Toyota Land Cruiser – VIP 4WD SUV',
-                passengers: 6,
-                luggage: 5,
-                price: '$85',
-                image: '/assets/vehicles/toyota-land-cruiser.jpg'
-              },
-              {
-                id: 'tr-4',
-                title: 'Toyota Alphard – Luxury VIP Van',
-                passengers: 7,
-                luggage: 6,
-                price: '$110',
-                image: '/assets/vehicles/toyota-alphard-vip.jpg'
-              },
-              {
-                id: 'tr-5',
-                title: 'Toyota Corolla – Chauffeur Sedan',
-                passengers: 4,
-                luggage: 3,
-                price: '$40',
-                image: '/assets/vehicles/toyota-corolla.jpg'
-              }
-            ];
-          }
-          if (parsed.settings) {
-            if (!parsed.settings.logoUrl || parsed.settings.logoUrl.includes('badge.svg')) {
-              parsed.settings.logoUrl = '/assets/air-dream-logo.png';
-            }
-            if (parsed.settings.brandName && parsed.settings.brandName.toLowerCase().includes('air dream')) {
-              parsed.settings.brandName = 'AIR DREAM';
-            }
-            if (parsed.settings.aboutArchImg?.includes('photo-1507525428034') || parsed.settings.aboutQuote?.includes('Arabian Travel')) {
-              parsed.settings = {
-                ...parsed.settings,
-                aboutQuote: 'We, at Air Dream Travel Tourism LLC, cater to our clients a lifestyle at its best where they can feel the pulse of Dubai and the unseen facets of the world, through our exclusive guided tours and other value-added services.',
-                aboutArchImg: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80',
-                bubble1Img: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=400&q=80',
-                bubble2Img: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=300&q=80',
-                bubble3Img: 'https://images.unsplash.com/photo-1580674684081-7617fbf3d745?auto=format&fit=crop&w=400&q=80'
-              };
-            }
-          }
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
-          setSiteData((prev) => ({ ...prev, ...parsed }));
-      } catch (e) {}
-    } else {
-      // Or fetch from default-data.json
-      fetch('/data/default-data.json')
-        .then((res) => res.json())
-        .then((defData) => {
-          if (defData) {
-            setSiteData((prev) => ({ ...prev, ...defData }));
-          }
-        })
-        .catch(() => {});
-    }
-
-    // Always fetch fresh data from backend
     fetchSiteData();
 
-    // Listen for cross-tab or cross-component admin updates
-    const handleUpdate = (e) => {
-      if (e?.detail && typeof e.detail === 'object') {
-        setSiteData((prev) => ({ ...prev, ...e.detail }));
-        return;
-      }
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          setSiteData((prev) => ({ ...prev, ...parsed }));
-        } catch (err) {}
-      } else {
-        fetchSiteData();
-      }
+    const handleUpdate = () => {
+      fetchSiteData();
     };
 
-    window.addEventListener('airdream-data-updated', handleUpdate);
     window.addEventListener('airdream:data_updated', handleUpdate);
+    window.addEventListener('airdream-data-updated', handleUpdate);
     window.addEventListener('storage', handleUpdate);
 
     return () => {
-      window.removeEventListener('airdream-data-updated', handleUpdate);
       window.removeEventListener('airdream:data_updated', handleUpdate);
+      window.removeEventListener('airdream-data-updated', handleUpdate);
       window.removeEventListener('storage', handleUpdate);
     };
   }, [fetchSiteData]);
 
   return (
-    <SiteDataContext.Provider value={{ siteData, loading, refreshData: fetchSiteData }}>
+    <SiteDataContext.Provider
+      value={{
+        siteData,
+        loading,
+        error,
+        refreshSiteData: fetchSiteData,
+      }}
+    >
       {children}
     </SiteDataContext.Provider>
   );
