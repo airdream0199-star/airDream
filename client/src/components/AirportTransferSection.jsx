@@ -69,7 +69,9 @@ export default function AirportTransferSection({ onBookTransfer }) {
     passengers: v.passengers || 4,
     luggage: v.luggage || 3,
     price: v.price
-      ? (typeof v.price === 'string' ? (v.price.includes('$') ? v.price : `$${v.price}`) : `$${v.price}`)
+      ? (typeof v.price === 'object'
+          ? `${v.currency || v.price.currency || '$'}${v.price.amount !== undefined ? v.price.amount : (v.price.value || '')}`
+          : (typeof v.price === 'string' ? (v.price.includes('$') || v.price.includes('AED') ? v.price : `$${v.price}`) : `$${v.price}`))
       : '$65',
     image: v.image || DEFAULT_VEHICLES[idx % DEFAULT_VEHICLES.length].image
   });

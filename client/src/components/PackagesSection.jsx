@@ -249,7 +249,9 @@ export default function PackagesSection({ onBookPackage }) {
       reviews: item.reviews || (50 + idx * 12),
       inclusions: inclusionsList,
       price: item.price
-        ? (typeof item.price === 'string' ? (item.price.includes('$') ? item.price : `$${item.price}`) : `$${item.price}`)
+        ? (typeof item.price === 'object'
+            ? `${item.currency || item.price.currency || '$'}${item.price.amount !== undefined ? item.price.amount : (item.price.value || '')}`
+            : (typeof item.price === 'string' ? (item.price.includes('$') || item.price.includes('AED') ? item.price : `$${item.price}`) : `$${item.price}`))
         : '$649',
       featured: isFeatured
     };

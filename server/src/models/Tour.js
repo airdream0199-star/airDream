@@ -35,9 +35,29 @@ const tourSchema = new mongoose.Schema(
       default: 'AED',
       trim: true,
     },
+    location: {
+      type: String,
+      default: 'Dubai, UAE',
+      trim: true,
+    },
+    vehicle: {
+      type: String,
+      default: '4WD Cruiser',
+      trim: true,
+    },
+    guide: {
+      type: String,
+      default: 'Driver-guide',
+      trim: true,
+    },
+    capacity: {
+      type: String,
+      default: '4 Persons',
+      trim: true,
+    },
     duration: {
-      days: { type: Number, default: 1 },
-      nights: { type: Number, default: 0 },
+      type: mongoose.Schema.Types.Mixed,
+      default: () => ({ days: 1, nights: 0 }),
     },
     category: {
       type: String,

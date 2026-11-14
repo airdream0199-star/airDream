@@ -72,7 +72,12 @@ export default function TourDetailsPage() {
               <span><i className="fa-solid fa-star" style={{ color: '#eab308' }}></i> {tour.rating} Rating</span>
             )}
             {tour.duration && (
-              <span><i className="fa-solid fa-clock"></i> {tour.duration.days} Day(s) {tour.duration.nights ? `/ ${tour.duration.nights} Night(s)` : ''}</span>
+              <span>
+                <i className="fa-solid fa-clock"></i>{' '}
+                {typeof tour.duration === 'object'
+                  ? `${tour.duration.days || 1} Day(s)${tour.duration.nights ? ` / ${tour.duration.nights} Night(s)` : ''}`
+                  : tour.duration}
+              </span>
             )}
           </div>
         </div>

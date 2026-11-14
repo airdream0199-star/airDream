@@ -4,6 +4,18 @@ import ConfirmModal from '../../components/admin/ConfirmModal';
 import ImageUploadField from '../../components/admin/ImageUploadField';
 import toast from 'react-hot-toast';
 
+const formatDurationString = (val) => {
+  if (typeof val === 'string' && val.trim()) return val;
+  if (val && typeof val === 'object') {
+    const days = val.days ?? 0;
+    const nights = val.nights ?? 0;
+    if (days && nights) return `${days}D / ${nights}N`;
+    if (days) return `${days} Day${days > 1 ? 's' : ''}`;
+    if (nights) return `${nights} Night${nights > 1 ? 's' : ''}`;
+  }
+  return '08-Hrs';
+};
+
 export default function ToursAdminPage() {
   const [tours, setTours] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,6 +27,10 @@ export default function ToursAdminPage() {
     category: 'Sightseeing',
     price: '',
     currency: 'AED',
+    duration: '08-Hrs',
+    location: 'Dubai, UAE',
+    vehicle: '4WD Cruiser',
+    capacity: '4 Persons',
     rating: 4.8,
     image: '',
     description: '',
@@ -45,6 +61,10 @@ export default function ToursAdminPage() {
       category: tour.category || 'Sightseeing',
       price: typeof tour.price === 'object' ? tour.price.amount : tour.price || '',
       currency: typeof tour.price === 'object' ? tour.price.currency : tour.currency || 'AED',
+      duration: formatDurationString(tour.duration || tour.hours),
+      location: tour.location || 'Dubai, UAE',
+      vehicle: tour.vehicle || tour.carHours || '4WD Cruiser',
+      capacity: tour.capacity || '4 Persons',
       rating: tour.rating || 4.8,
       image: (tour.images && tour.images[0]) || '',
       description: tour.description || '',
@@ -60,6 +80,10 @@ export default function ToursAdminPage() {
       category: 'Sightseeing',
       price: '',
       currency: 'AED',
+      duration: '08-Hrs',
+      location: 'Dubai, UAE',
+      vehicle: '4WD Cruiser',
+      capacity: '4 Persons',
       rating: 4.8,
       image: '',
       description: '',
@@ -80,6 +104,10 @@ export default function ToursAdminPage() {
       category: form.category.trim(),
       price: Number(form.price) || form.price,
       currency: form.currency.trim(),
+      duration: form.duration.trim(),
+      location: form.location.trim(),
+      vehicle: form.vehicle.trim(),
+      capacity: form.capacity.trim(),
       rating: Number(form.rating) || 4.8,
       images: form.image ? [form.image] : [],
       description: form.description.trim(),
@@ -96,7 +124,8 @@ export default function ToursAdminPage() {
         toast.success('Tour updated successfully');
       }
       setEditingTour(null);
-      loadTours();
+      await loadTours();
+      window.dispatchEvent(new CustomEvent('airdream:data_updated', { detail: { resource: 'tours' } }));
     } catch (err) {
       toast.error(err.response?.data?.message || 'Error saving tour');
     }
@@ -108,7 +137,8 @@ export default function ToursAdminPage() {
       await adminApi.resource('tours').delete(deleteTarget._id);
       toast.success('Tour deleted');
       setDeleteTarget(null);
-      loadTours();
+      await loadTours();
+      window.dispatchEvent(new CustomEvent('airdream:data_updated', { detail: { resource: 'tours' } }));
     } catch {
       toast.error('Error deleting tour');
     }
@@ -159,6 +189,7 @@ export default function ToursAdminPage() {
                   <th style={{ padding: '12px' }}>Tour</th>
                   <th style={{ padding: '12px' }}>Category</th>
                   <th style={{ padding: '12px' }}>Price</th>
+                  <th style={{ padding: '12px' }}>Duration</th>
                   <th style={{ padding: '12px' }}>Rating</th>
                   <th style={{ padding: '12px' }}>Visibility</th>
                   <th style={{ padding: '12px', textAlign: 'right' }}>Actions</th>
@@ -168,6 +199,7 @@ export default function ToursAdminPage() {
                 {tours.map((t) => {
                   const priceStr = typeof t.price === 'object' ? `${t.price.currency || 'AED'} ${t.price.amount}` : (typeof t.price === 'number' ? `AED ${t.price}` : t.price);
                   const img = (t.images && t.images[0]) || '/assets/cards/card5.jpg';
+                  const durStr = formatDurationString(t.duration || t.hours);
 
                   return (
                     <tr key={t._id} style={{ borderBottom: '1px solid #f8fafc' }}>
@@ -182,6 +214,7 @@ export default function ToursAdminPage() {
                       </td>
                       <td style={{ padding: '14px 12px', color: '#475569' }}>{t.category || 'Sightseeing'}</td>
                       <td style={{ padding: '14px 12px', fontWeight: 700, color: '#0284c7' }}>{priceStr}</td>
+                      <td style={{ padding: '14px 12px', color: '#64748b' }}>{durStr}</td>
                       <td style={{ padding: '14px 12px', color: '#eab308' }}><i className="fa-solid fa-star"></i> {t.rating || 4.8}</td>
                       <td style={{ padding: '14px 12px' }}>
                         <span style={{ padding: '4px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600, background: t.isActive !== false ? '#dcfce7' : '#fee2e2', color: t.isActive !== false ? '#15803d' : '#b91c1c' }}>
@@ -208,7 +241,7 @@ export default function ToursAdminPage() {
       {/* Edit / Create Modal */}
       {editingTour && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(11,25,44,0.7)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }} onClick={() => setEditingTour(null)}>
-          <div style={{ background: '#fff', borderRadius: '20px', maxWidth: '650px', width: '100%', padding: '28px', maxHeight: '85vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+          <div style={{ background: '#fff', borderRadius: '20px', maxWidth: '650px', width: '100%', padding: '28px', maxHeight: '88vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
             <h3 style={{ margin: '0 0 20px 0', fontSize: '1.3rem' }}>{editingTour.isNew ? 'Create New Tour' : 'Edit Tour'}</h3>
             <form onSubmit={handleSubmit}>
               <div style={{ marginBottom: '14px' }}>
@@ -228,6 +261,28 @@ export default function ToursAdminPage() {
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px' }}>Currency</label>
                   <input type="text" value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px' }}>Duration (e.g. 06-Hrs or 1 Day)</label>
+                  <input type="text" value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} placeholder="06-Hrs" style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px' }}>Location</label>
+                  <input type="text" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Dubai Desert, UAE" style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px' }}>Vehicle / Transport</label>
+                  <input type="text" value={form.vehicle} onChange={(e) => setForm({ ...form, vehicle: e.target.value })} placeholder="4WD Cruiser" style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px' }}>Capacity / Group Size</label>
+                  <input type="text" value={form.capacity} onChange={(e) => setForm({ ...form, capacity: e.target.value })} placeholder="6 Persons" style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
                 </div>
               </div>
 

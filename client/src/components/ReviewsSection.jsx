@@ -57,7 +57,7 @@ export default function ReviewsSection() {
       item.image ||
       DEFAULT_REVIEWS[idx % DEFAULT_REVIEWS.length].avatar,
     stars: item.stars || item.rating || 5,
-    quote: item.quote || item.review || item.title || 'Exceptional service and unforgettable experience.'
+    quote: item.quote || item.review || item.comment || item.title || 'Exceptional service and unforgettable experience.'
   });
 
   useEffect(() => {

@@ -95,18 +95,45 @@ export default function HolidayPackagesSection({ onBookPackage }) {
     containerProps
   } = useAutoManualScroll({ speed: 1.0, cardWidth: 336, setsCount: 4 });
 
+  const formatPackageDuration = (val, hoursFallback) => {
+    if (typeof val === 'string' && val.trim()) return val;
+    if (typeof hoursFallback === 'string' && hoursFallback.trim()) return hoursFallback;
+    if (val && typeof val === 'object') {
+      const days = val.days ?? 0;
+      const nights = val.nights ?? 0;
+      if (days && nights) return `${days}D / ${nights}N`;
+      if (days) return `${days} Day${days > 1 ? 's' : ''}`;
+      if (nights) return `${nights} Night${nights > 1 ? 's' : ''}`;
+    }
+    return 'Full Day';
+  };
+
+  const formatPackagePrice = (priceVal, currencyVal = 'AED') => {
+    if (priceVal === null || priceVal === undefined || priceVal === '') return 'AED 299';
+    if (typeof priceVal === 'object') {
+      const curr = priceVal.currency || currencyVal || 'AED';
+      const amt = priceVal.amount ?? priceVal.value ?? '';
+      return amt !== '' ? `${curr} ${amt}` : 'AED 299';
+    }
+    if (typeof priceVal === 'number') {
+      return `${currencyVal || 'AED'} ${priceVal}`;
+    }
+    if (typeof priceVal === 'string') {
+      return priceVal.startsWith('$') || priceVal.startsWith('AED') ? priceVal : `${currencyVal || 'AED'} ${priceVal}`;
+    }
+    return 'AED 299';
+  };
+
   const mapPackage = (item, idx) => ({
     id: item.id || item._id || `hp-${idx}`,
     title: item.title,
     location: item.location || item.tagline || 'Dubai, UAE',
     rating: item.rating ? `${item.rating}` : '5.0',
-    hours: item.duration || item.hours || 'Full Day',
+    hours: formatPackageDuration(item.duration, item.hours),
     carHours: item.vehicle || item.carHours || 'VIP Transfer',
     guide: item.guide || 'Driver-guide',
     capacity: item.capacity || item.groupSize || '4 Persons',
-    price: item.price
-      ? (typeof item.price === 'string' ? item.price : `$${item.price}`)
-      : DEFAULT_HOLIDAY_PACKAGES[idx % DEFAULT_HOLIDAY_PACKAGES.length].price,
+    price: formatPackagePrice(item.price, item.currency),
     image:
       item.image ||
       item.coverImage ||

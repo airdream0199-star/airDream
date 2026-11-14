@@ -91,7 +91,9 @@ export default function AttractionsSection({ onBookAttraction }) {
       (item.images && item.images[0]) ||
       DUBAI_ATTRACTIONS[idx % DUBAI_ATTRACTIONS.length].image,
     price: item.price
-      ? (typeof item.price === 'string' ? item.price : `$${item.price}`)
+      ? (typeof item.price === 'object'
+          ? `${item.currency || item.price.currency || '$'}${item.price.amount !== undefined ? item.price.amount : (item.price.value || '')}`
+          : (typeof item.price === 'string' ? item.price : `$${item.price}`))
       : DUBAI_ATTRACTIONS[idx % DUBAI_ATTRACTIONS.length].price
   });
 

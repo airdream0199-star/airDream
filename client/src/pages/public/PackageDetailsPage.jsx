@@ -67,7 +67,14 @@ export default function PackageDetailsPage() {
             {pkg.title}
           </h1>
           <div style={{ display: 'flex', gap: '20px', alignItems: 'center', fontSize: '0.95rem', color: '#cbd5e1' }}>
-            <span><i className="fa-solid fa-clock"></i> {typeof pkg.duration === 'string' ? pkg.duration : '5 Days / 4 Nights'}</span>
+            <span>
+              <i className="fa-solid fa-clock"></i>{' '}
+              {typeof pkg.duration === 'string'
+                ? pkg.duration
+                : pkg.duration && typeof pkg.duration === 'object'
+                ? `${pkg.duration.days || 5} Days${pkg.duration.nights ? ` / ${pkg.duration.nights} Nights` : ''}`
+                : '5 Days / 4 Nights'}
+            </span>
             {pkg.vehicle && <span><i className="fa-solid fa-car"></i> {pkg.vehicle}</span>}
             {pkg.capacity && <span><i className="fa-solid fa-users"></i> {pkg.capacity}</span>}
           </div>
