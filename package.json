@@ -10,7 +10,8 @@
     "seed": "cd server && node src/scripts/seedAdmin.js",
     "migrate": "cd server && node src/scripts/migrateData.js",
     "test": "cd server && npm test",
-    "build": "cd client && npm run build"
+    "build": "cd client && npm run build",
+    "vercel-build": "cd client && npm install && npm run build"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
