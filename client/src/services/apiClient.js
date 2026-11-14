@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Canonical base URL pointing to /api/v1
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+// Canonical base URL pointing to /api/v1 (Defaults to deployed Vercel backend)
+const baseURL = import.meta.env.VITE_API_URL || 'https://air-dream-pi.vercel.app/api/v1';
 
 const apiClient = axios.create({
   baseURL,
