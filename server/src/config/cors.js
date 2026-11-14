@@ -1,39 +1,16 @@
 const cors = require('cors');
 
-const defaultOrigins = [
-  'https://airdreamtraveltourism.com',
-  'https://www.airdreamtraveltourism.com',
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://localhost:3000',
-];
-
+/**
+ * Full Permissive CORS Configuration for All Origins (*)
+ * Grants unrestricted cross-origin resource sharing access across all domains,
+ * ports, mobile apps, and deployment environments for all HTTP verbs and headers.
+ */
 const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, server-to-server)
-    if (!origin) return callback(null, true);
-
-    const clientUrl = process.env.CLIENT_URL;
-    const allowed = [...defaultOrigins];
-    if (clientUrl && !allowed.includes(clientUrl)) {
-      allowed.push(clientUrl);
-    }
-
-    if (
-      allowed.includes(origin) ||
-      /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin) ||
-      /\.vercel\.app$/.test(origin)
-    ) {
-      return callback(null, true);
-    }
-
-    // In production or other origins
-    return callback(null, true);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  optionsSuccessStatus: 204,
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
+  allowedHeaders: '*',
+  exposedHeaders: ['*'],
+  optionsSuccessStatus: 200,
 };
 
 module.exports = cors(corsOptions);
