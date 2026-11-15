@@ -1257,6 +1257,24 @@ input, select, textarea {
   overflow: visible; /* To allow floating search card to overlap */
 }
 
+/* Hero Section Image Only Mode (No Text Overlay) */
+.hero-section.hero-image-only {
+  min-height: auto;
+  height: clamp(380px, 60vh, 650px);
+  overflow: hidden;
+  display: block;
+}
+
+.hero-section.hero-image-only .hero-slider-container {
+  height: 100%;
+  min-height: 100%;
+}
+
+.hero-section.hero-image-only .hero-slide-bg {
+  background-size: cover;
+  background-position: center center;
+}
+
 .hero-slider-container {
   position: relative;
   width: 100%;
@@ -3422,6 +3440,10 @@ html, body {
   /* Hero Section */
   .hero-section {
     min-height: auto;
+  }
+
+  .hero-section.hero-image-only {
+    height: clamp(240px, 45vh, 420px);
   }
 
   .hero-slider-container {

@@ -47,6 +47,31 @@ main.main-content {
   from { transform: scale(0.92); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+/* Hero Section Image Only Mode (No text overlay) */
+.hero-section.hero-image-only {
+  min-height: auto !important;
+  height: clamp(380px, 60vh, 650px) !important;
+  background-color: #0b192c !important;
+  overflow: hidden !important;
+  display: block !important;
+}
+
+.hero-section.hero-image-only .hero-slider-container {
+  height: 100% !important;
+  min-height: 100% !important;
+}
+
+.hero-section.hero-image-only .hero-slide-bg {
+  background-size: cover !important;
+  background-position: center center !important;
+}
+
+@media (max-width: 768px) {
+  .hero-section.hero-image-only {
+    height: clamp(240px, 45vh, 420px) !important;
+  }
+}
 /* ==========================================================================
    AIR DREAM TRAVEL & TOURISM - ADMIN DASHBOARD STYLESHEET
    ========================================================================== */

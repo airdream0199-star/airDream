@@ -118,8 +118,10 @@ export default function HeroSlidesAdminPage() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 800, color: '#0f172a' }}>Hero Slides & Wallpapers</h1>
-          <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '0.88rem' }}>Manage large hero background visuals and main banners.</p>
+          <h1 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 800, color: '#0f172a' }}>Hero Slides &amp; Wallpapers</h1>
+          <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '0.88rem' }}>
+            Manage full-width hero wallpaper images. The homepage hero section displays pure images only (no text overlay).
+          </p>
         </div>
         <button onClick={handleAddNew} style={{ padding: '10px 18px', borderRadius: '10px', background: '#0284c7', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
           <i className="fa-solid fa-plus"></i> Add Slide
@@ -143,23 +145,22 @@ export default function HeroSlidesAdminPage() {
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     onError={(e) => { e.target.src = '/assets/cards/card1.png'; }}
                   />
-                  {s.badge && (
-                    <div style={{ position: 'absolute', top: '10px', left: '10px', background: 'rgba(11,25,44,0.85)', color: '#00d2ff', padding: '4px 10px', borderRadius: '10px', fontSize: '0.72rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '5px' }}>
-                      <i className={`fa-solid ${s.badgeIcon || 'fa-plane'}`}></i> {s.badge}
-                    </div>
-                  )}
                   {!s.isActive && (
                     <div style={{ position: 'absolute', top: '10px', right: '10px', background: '#ef4444', color: '#fff', padding: '3px 8px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700 }}>
                       Inactive
                     </div>
                   )}
                 </div>
-                <div style={{ padding: '18px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  <h3 style={{ margin: '0 0 6px 0', fontSize: '1.15rem', color: '#0f172a' }}>
-                    {s.title} {s.highlight && <span style={{ color: '#0284c7' }}>{s.highlight}</span>}
-                  </h3>
-                  <p style={{ margin: '0 0 16px 0', color: '#64748b', fontSize: '0.85rem', flex: 1 }}>{s.desc}</p>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: '#0f172a' }}>
+                      {s.title || 'Hero Wallpaper'}
+                    </h3>
+                    <span style={{ fontSize: '0.72rem', background: '#e0f2fe', color: '#0284c7', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>
+                      Wallpaper
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '10px' }}>
                     <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Order: {s.order || 0}</span>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button onClick={() => handleEdit(s)} style={{ padding: '6px 12px', borderRadius: '6px', background: '#e2e8f0', border: 'none', cursor: 'pointer', fontSize: '0.82rem' }}>Edit</button>
@@ -178,65 +179,55 @@ export default function HeroSlidesAdminPage() {
           <div style={{ background: '#fff', borderRadius: '20px', maxWidth: '640px', width: '100%', padding: '28px', maxHeight: '88vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
             <h3 style={{ margin: '0 0 20px 0', fontSize: '1.3rem' }}>{editingSlide.isNew ? 'Create Hero Slide' : 'Edit Hero Slide'}</h3>
             <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: '14px' }}>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px' }}>Slide Title *</label>
-                <input type="text" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Fly Anywhere at the" style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+              <div style={{ marginBottom: '16px', background: '#f0f9ff', padding: '14px', borderRadius: '12px', border: '1px solid #bae6fd' }}>
+                <p style={{ margin: 0, fontSize: '0.82rem', color: '#0369a1', fontWeight: 500 }}>
+                  <i className="fa-solid fa-circle-info" style={{ marginRight: '6px' }}></i>
+                  The homepage hero section displays high-resolution images only. Upload a wide landscape wallpaper (1920x1080 recommended).
+                </p>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px' }}>Highlight Text (Accent Color)</label>
-                  <input type="text" value={form.highlight} onChange={(e) => setForm({ ...form, highlight: e.target.value })} placeholder="e.g. Best Fares" style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px' }}>Badge Pill Text</label>
-                  <input type="text" value={form.badge} onChange={(e) => setForm({ ...form, badge: e.target.value })} placeholder="e.g. Premium Flight Booking" style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
-                </div>
-              </div>
+              <ImageUploadField
+                label="Slide Background Image *"
+                value={form.image}
+                onChange={(val) => setForm({ ...form, image: val })}
+                folder="airdream/wallpapers"
+              />
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px', marginBottom: '14px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px' }}>Badge Icon (FontAwesome)</label>
-                  <input type="text" value={form.badgeIcon} onChange={(e) => setForm({ ...form, badgeIcon: e.target.value })} placeholder="e.g. fa-plane, fa-kaaba" style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px' }}>
+                    Slide Title / Internal Label *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={form.title}
+                    onChange={(e) => setForm({ ...form, title: e.target.value })}
+                    placeholder="e.g. Tropical Beach Resort"
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                  />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px' }}>Display Order</label>
-                  <input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: Number(e.target.value) || 0 })} style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
-                </div>
-              </div>
-
-              <ImageUploadField label="Slide Background Image" value={form.image} onChange={(val) => setForm({ ...form, image: val })} folder="airdream/wallpapers" />
-
-              <div style={{ marginBottom: '14px' }}>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px' }}>Subtitle / Description</label>
-                <textarea rows={3} value={form.desc} onChange={(e) => setForm({ ...form, desc: e.target.value })} placeholder="Describe what travelers get..." style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px' }}>Primary Button Text</label>
-                  <input type="text" value={form.primaryBtnText} onChange={(e) => setForm({ ...form, primaryBtnText: e.target.value })} placeholder="Book Your Flight" style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px' }}>Primary Button Link</label>
-                  <input type="text" value={form.primaryBtnLink} onChange={(e) => setForm({ ...form, primaryBtnLink: e.target.value })} placeholder="#packages" style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px' }}>Secondary Button Text</label>
-                  <input type="text" value={form.secondaryBtnText} onChange={(e) => setForm({ ...form, secondaryBtnText: e.target.value })} placeholder="Request Custom Quote" style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px' }}>Secondary Button Link</label>
-                  <input type="text" value={form.secondaryBtnLink} onChange={(e) => setForm({ ...form, secondaryBtnLink: e.target.value })} placeholder="#contact" style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+                  <input
+                    type="number"
+                    value={form.order}
+                    onChange={(e) => setForm({ ...form, order: Number(e.target.value) || 0 })}
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                  />
                 </div>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-                <input type="checkbox" id="slideActive" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />
-                <label htmlFor="slideActive" style={{ fontSize: '0.88rem', fontWeight: 600 }}>Active (Display on Homepage Slider)</label>
+                <input
+                  type="checkbox"
+                  id="slideActive"
+                  checked={form.isActive}
+                  onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                />
+                <label htmlFor="slideActive" style={{ fontSize: '0.88rem', fontWeight: 600 }}>
+                  Active (Display on Homepage Slider)
+                </label>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>

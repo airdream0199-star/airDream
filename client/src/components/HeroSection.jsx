@@ -5,96 +5,46 @@ import publicApi from "../services/publicApi";
 const DEFAULT_SLIDES = [
   {
     id: "slide-1",
-    badge: "Premium Flight Booking",
-    badgeIcon: "fa-plane",
-    title: (
-      <>
-        Fly Anywhere at the <span className="highlight-text">Best Fares</span>
-      </>
-    ),
-    desc: "Experience seamless global connections with world-class airlines. Unlock corporate discounts, flexible baggage, and 24/7 travel care.",
     bg: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1920&q=80",
-    primaryBtnText: "Book Your Flight",
-    primaryBtnIcon: "fa-ticket",
-    primaryBtnLink: "#packages",
-    secondaryBtnText: "Request Custom Quote",
   },
   {
     id: "slide-2",
-    badge: "Sacred Pilgrimage",
-    badgeIcon: "fa-kaaba",
-    title: (
-      <>
-        Hajj &amp; Umrah <span className="highlight-text">Made Easy</span>
-      </>
-    ),
-    desc: "Embark on your spiritual pilgrimage with utter peace of mind. Deluxe 5-star hotels near Haram, VIP transport, and guided Ziyarat.",
     bg: "https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=1920&q=80",
-    primaryBtnText: "View Umrah Packages",
-    primaryBtnIcon: "fa-moon",
-    primaryBtnLink: "#packages",
-    secondaryBtnText: "Inquire Umrah Group",
   },
   {
     id: "slide-3",
-    badge: "Curated Vacations",
-    badgeIcon: "fa-compass",
-    title: (
-      <>
-        Explore the World with <span className="highlight-text">Air Dream</span>
-      </>
-    ),
-    desc: "From turquoise tropical waters in Maldives to Swiss Alpine peaks and Dubai luxury, create travel memories that last forever.",
     bg: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=80",
-    primaryBtnText: "Plan Your Trip",
-    primaryBtnIcon: "fa-map-location-dot",
-    primaryBtnLink: "#packages",
-    secondaryBtnText: "Plan Your Honeymoon",
+  },
+  {
+    id: "slide-4",
+    bg: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1920&q=80",
   },
 ];
 
 const formatSlide = (item, idx) => {
-  let titleNode = item.title;
-  if (item.highlight && typeof item.title === "string") {
-    titleNode = (
-      <>
-        {item.title}{" "}
-        <span className="highlight-text">{item.highlight}</span>
-      </>
-    );
-  }
-
-  // Fallback background image if user provided none or empty
   const fallbackBg =
     DEFAULT_SLIDES[idx % DEFAULT_SLIDES.length]?.bg ||
     "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1920&q=80";
 
-  const rawBg = item.image || item.bg;
+  const rawBg = item?.image || item?.bg;
   const bg =
     rawBg && typeof rawBg === "string" && rawBg.trim().length > 0
       ? rawBg.trim()
       : fallbackBg;
 
   return {
-    id: item._id || item.id || `slide-${idx}`,
-    badge: item.badge || "Premium Flight Booking",
-    badgeIcon: item.badgeIcon || "fa-plane",
-    title: titleNode || "Fly Anywhere at the Best Fares",
-    desc: item.desc || item.description || "",
+    id: item?._id || item?.id || `slide-${idx}`,
     bg,
-    primaryBtnText: item.primaryBtnText || "Book Your Flight",
-    primaryBtnIcon: item.primaryBtnIcon || "fa-ticket",
-    primaryBtnLink: item.primaryBtnLink || "#packages",
-    secondaryBtnText: item.secondaryBtnText || "Request Custom Quote",
   };
 };
 
-export default function HeroSection({ onOpenQuote }) {
+export default function HeroSection() {
   const { siteData } = useSiteData();
   const [slides, setSlides] = useState(() => {
     const initial = siteData?.wallpapers || siteData?.heroSlides;
     if (Array.isArray(initial) && initial.length > 0) {
-      return initial.map(formatSlide);
+      const valid = initial.filter((s) => s.image || s.bg);
+      if (valid.length > 0) return valid.map(formatSlide);
     }
     return DEFAULT_SLIDES;
   });
@@ -108,8 +58,9 @@ export default function HeroSection({ onOpenQuote }) {
         : Array.isArray(data?.data)
         ? data.data
         : [];
-      if (list.length > 0) {
-        setSlides(list.map(formatSlide));
+      const valid = list.filter((s) => s.image || s.bg);
+      if (valid.length > 0) {
+        setSlides(valid.map(formatSlide));
         return;
       }
     } catch (err) {
@@ -119,8 +70,11 @@ export default function HeroSection({ onOpenQuote }) {
     try {
       const scData = await publicApi.getSiteContent();
       const wallpapers = scData?.wallpapers || scData?.heroSlides;
-      if (Array.isArray(wallpapers) && wallpapers.length > 0) {
-        setSlides(wallpapers.map(formatSlide));
+      if (Array.isArray(wallpapers)) {
+        const valid = wallpapers.filter((s) => s.image || s.bg);
+        if (valid.length > 0) {
+          setSlides(valid.map(formatSlide));
+        }
       }
     } catch (e) {}
   }, []);
@@ -128,8 +82,11 @@ export default function HeroSection({ onOpenQuote }) {
   // Sync with global siteData from SiteDataContext
   useEffect(() => {
     const list = siteData?.wallpapers || siteData?.heroSlides;
-    if (Array.isArray(list) && list.length > 0) {
-      setSlides(list.map(formatSlide));
+    if (Array.isArray(list)) {
+      const valid = list.filter((s) => s.image || s.bg);
+      if (valid.length > 0) {
+        setSlides(valid.map(formatSlide));
+      }
     }
   }, [siteData]);
 
@@ -150,7 +107,7 @@ export default function HeroSection({ onOpenQuote }) {
     };
   }, [loadFreshWallpapers]);
 
-  // Slideshow auto-advance interval
+  // Slideshow auto-advance interval (every 5 seconds)
   useEffect(() => {
     if (slides.length <= 1) return;
     const timer = setInterval(() => {
@@ -159,20 +116,11 @@ export default function HeroSection({ onOpenQuote }) {
     return () => clearInterval(timer);
   }, [slides.length]);
 
-  const scrollToLink = (e, link = "#packages") => {
-    if (link && link.startsWith("#")) {
-      e.preventDefault();
-      const el =
-        document.querySelector(link) || document.querySelector("#why-choose");
-      if (el) el.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
   const activeIndex = currentSlide % (slides.length || 1);
 
   return (
-    <section className="hero-section" id="hero">
-      {/* Dynamic Wallpaper Slider */}
+    <section className="hero-section hero-image-only" id="hero">
+      {/* Pure Image Wallpaper Slider - No Text */}
       <div className="hero-slider-container" id="heroSlider">
         <div className="hero-slider-track">
           {slides.map((slide, idx) => (
@@ -184,42 +132,6 @@ export default function HeroSection({ onOpenQuote }) {
                 className="hero-slide-bg"
                 style={{ backgroundImage: `url(${slide.bg})` }}
               ></div>
-              <div className="hero-overlay"></div>
-              <div className="container">
-                <div className="hero-content">
-                  <div className="hero-badge">
-                    <i className={`fa-solid ${slide.badgeIcon}`}></i>{" "}
-                    {slide.badge}
-                  </div>
-                  <h1 className="hero-title">{slide.title}</h1>
-                  <p className="hero-desc">{slide.desc}</p>
-                  <div className="hero-btns">
-                    <a
-                      href={slide.primaryBtnLink || "#packages"}
-                      onClick={(e) => scrollToLink(e, slide.primaryBtnLink)}
-                      className="btn btn-gold"
-                    >
-                      <i className={`fa-solid ${slide.primaryBtnIcon}`}></i>{" "}
-                      {slide.primaryBtnText}
-                    </a>
-                    <button
-                      type="button"
-                      className="btn btn-outline-white"
-                      onClick={() =>
-                        onOpenQuote &&
-                        onOpenQuote(
-                          typeof slide.title === "string"
-                            ? slide.title
-                            : slide.badge,
-                        )
-                      }
-                    >
-                      <i className="fa-solid fa-file-invoice"></i>{" "}
-                      {slide.secondaryBtnText || "Request Custom Quote"}
-                    </button>
-                  </div>
-                </div>
-              </div>
             </div>
           ))}
         </div>
@@ -232,7 +144,7 @@ export default function HeroSection({ onOpenQuote }) {
               className="slider-arrow-btn slider-arrow-prev"
               onClick={() =>
                 setCurrentSlide(
-                  (currentSlide - 1 + slides.length) % slides.length,
+                  (currentSlide - 1 + slides.length) % slides.length
                 )
               }
               aria-label="Previous Slide"
