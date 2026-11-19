@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useSiteData } from "../context/SiteDataContext";
 import publicApi from "../services/publicApi";
 
@@ -49,6 +49,47 @@ export default function HeroSection() {
     return DEFAULT_SLIDES;
   });
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [navHeight, setNavHeight] = useState(118);
+  const [partnerSliderHeight, setPartnerSliderHeight] = useState(116);
+
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  // Dynamically calculate exact total navbar height and partner slider height
+  // so that both the hero image slider and the slider below it fit in the initial screen
+  useEffect(() => {
+    const updateDimensions = () => {
+      const topBar = document.querySelector(".top-bar, .air-dream-top-bar");
+      const header = document.querySelector(".main-header");
+      const topBarH = topBar ? topBar.offsetHeight : 0;
+      const headerH =
+        header && header.offsetHeight > 0
+          ? header.offsetHeight
+          : window.innerWidth <= 768
+          ? 64
+          : 84;
+      const total = topBarH + headerH;
+      if (total > 0) {
+        setNavHeight(total);
+      }
+
+      const partners = document.querySelector(".partners-section");
+      if (partners && partners.offsetHeight > 0) {
+        setPartnerSliderHeight(partners.offsetHeight);
+      }
+    };
+
+    updateDimensions();
+    const t1 = setTimeout(updateDimensions, 100);
+    const t2 = setTimeout(updateDimensions, 400);
+
+    window.addEventListener("resize", updateDimensions);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      window.removeEventListener("resize", updateDimensions);
+    };
+  }, []);
 
   const loadFreshWallpapers = useCallback(async () => {
     try {
@@ -118,10 +159,44 @@ export default function HeroSection() {
 
   const activeIndex = currentSlide % (slides.length || 1);
 
+  // Mobile Touch Swipe Handlers
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e) => {
+    touchEndX.current = e.changedTouches[0].clientX;
+    const diff = touchStartX.current - touchEndX.current;
+    if (diff > 50) {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    } else if (diff < -50) {
+      setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+    }
+  };
+
+  const totalOffset = (navHeight || 118) + (partnerSliderHeight || 116);
+  const computedHeight = `calc(100vh - ${totalOffset}px)`;
+  const computedDvh = `calc(100dvh - ${totalOffset}px)`;
+
   return (
-    <section className="hero-section hero-image-only" id="hero">
-      {/* Pure Image Wallpaper Slider - No Text */}
-      <div className="hero-slider-container" id="heroSlider">
+    <section
+      className="hero-section hero-image-only"
+      id="hero"
+      style={{
+        "--hero-calc-height": computedHeight,
+        "--hero-calc-dvh": computedDvh,
+        height: computedHeight,
+        minHeight: computedHeight,
+        maxHeight: computedDvh,
+      }}
+    >
+      {/* Full-Page Wallpaper Slider - Starts directly below navbar */}
+      <div
+        className="hero-slider-container"
+        id="heroSlider"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <div className="hero-slider-track">
           {slides.map((slide, idx) => (
             <div

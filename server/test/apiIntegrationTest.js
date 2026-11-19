@@ -82,6 +82,7 @@ async function testApi() {
   } finally {
     server.close();
     await mongoose.disconnect();
+    process.exit(0);
   }
 }
 

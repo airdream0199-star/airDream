@@ -3,6 +3,7 @@ import api from '../utils/api';
 import { useAutoManualScroll } from '../hooks/useAutoManualScroll';
 import ScrollControlBar from './ScrollControlBar';
 import { useSiteData } from '../context/SiteDataContext';
+import TourDetailModal from './TourDetailModal';
 
 const DEFAULT_HOLIDAY_PACKAGES = [
   {
@@ -87,6 +88,7 @@ export default function HolidayPackagesSection({ onBookPackage }) {
     }
     return DEFAULT_HOLIDAY_PACKAGES;
   });
+  const [selectedPackage, setSelectedPackage] = useState(null);
 
   const {
     scrollPrev,
@@ -124,22 +126,32 @@ export default function HolidayPackagesSection({ onBookPackage }) {
     return 'AED 299';
   };
 
-  const mapPackage = (item, idx) => ({
-    id: item.id || item._id || `hp-${idx}`,
-    title: item.title,
-    location: item.location || item.tagline || 'Dubai, UAE',
-    rating: item.rating ? `${item.rating}` : '5.0',
-    hours: formatPackageDuration(item.duration, item.hours),
-    carHours: item.vehicle || item.carHours || 'VIP Transfer',
-    guide: item.guide || 'Driver-guide',
-    capacity: item.capacity || item.groupSize || '4 Persons',
-    price: formatPackagePrice(item.price, item.currency),
-    image:
-      item.image ||
-      item.coverImage ||
-      (item.images && item.images[0]) ||
-      DEFAULT_HOLIDAY_PACKAGES[idx % DEFAULT_HOLIDAY_PACKAGES.length].image
-  });
+  const mapPackage = (item, idx) => {
+    const defaultImg = DEFAULT_HOLIDAY_PACKAGES[idx % DEFAULT_HOLIDAY_PACKAGES.length].image;
+    const images = Array.isArray(item.images) && item.images.length > 0
+      ? item.images
+      : [item.image || item.coverImage || defaultImg];
+
+    return {
+      id: item.id || item._id || `hp-${idx}`,
+      _id: item._id,
+      title: item.title,
+      location: item.location || item.tagline || 'Dubai, UAE',
+      rating: item.rating ? `${item.rating}` : '5.0',
+      hours: formatPackageDuration(item.duration, item.hours),
+      carHours: item.vehicle || item.carHours || 'VIP Transfer',
+      guide: item.guide || 'Driver-guide',
+      capacity: item.capacity || item.groupSize || '4 Persons',
+      price: formatPackagePrice(item.price, item.currency),
+      originalPrice: item.originalPrice ? formatPackagePrice(item.originalPrice, item.currency) : null,
+      image: images[0] || defaultImg,
+      images,
+      description: item.description || '',
+      highlights: Array.isArray(item.highlights) && item.highlights.length > 0 ? item.highlights : [],
+      category: item.category || 'Special Holiday Package',
+      raw: item,
+    };
+  };
 
   useEffect(() => {
     if (siteData?.holidayPackages && siteData.holidayPackages.length > 0) {
@@ -197,9 +209,10 @@ export default function HolidayPackagesSection({ onBookPackage }) {
       className="tour-trip-card"
       onClick={() => {
         if (!hasDragged()) {
-          onBookPackage && onBookPackage(pkg.title, pkg.price);
+          setSelectedPackage(pkg);
         }
       }}
+      title="Tap to view full package details"
     >
       <div className="tour-card-img-wrap">
         <img
@@ -213,6 +226,10 @@ export default function HolidayPackagesSection({ onBookPackage }) {
             e.target.src = DEFAULT_HOLIDAY_PACKAGES[fallbackIdx % DEFAULT_HOLIDAY_PACKAGES.length].image;
           }}
         />
+        <div className="tour-card-hover-hint">
+          <i className="fa-solid fa-arrow-up-right-from-square"></i>
+          <span>View Details</span>
+        </div>
       </div>
       <div className="tour-card-body">
         <div className="tour-card-header-meta">
@@ -248,10 +265,10 @@ export default function HolidayPackagesSection({ onBookPackage }) {
             className="btn-book-tour"
             onClick={(e) => {
               e.stopPropagation();
-              if (onBookPackage) onBookPackage(pkg.title, pkg.price);
+              setSelectedPackage(pkg);
             }}
           >
-            Book Now
+            View Details
           </button>
         </div>
       </div>
@@ -291,6 +308,15 @@ export default function HolidayPackagesSection({ onBookPackage }) {
           READ MORE
         </a>
       </div>
+
+      {/* Detailed Package Modal */}
+      {selectedPackage && (
+        <TourDetailModal
+          tour={selectedPackage}
+          onClose={() => setSelectedPackage(null)}
+          onBookTour={onBookPackage}
+        />
+      )}
     </section>
   );
 }

@@ -3,6 +3,7 @@ import api from '../utils/api';
 import { useAutoManualScroll } from '../hooks/useAutoManualScroll';
 import ScrollControlBar from './ScrollControlBar';
 import { useSiteData } from '../context/SiteDataContext';
+import TourDetailModal from './TourDetailModal';
 
 // Safe Duration & Price String Formatters
 const formatTourDuration = (val, hoursFallback) => {
@@ -100,26 +101,44 @@ const TOUR_SECTIONS_CONFIG = [
   },
 ];
 
-// Map backend DB tour document to frontend card model
-const mapTourItem = (item, idx) => ({
-  id: item._id || item.id || `tour-${idx}`,
-  title: item.title || 'Tour Package',
-  location: item.location || 'Dubai, UAE',
-  rating: item.rating ? String(item.rating) : '5.0',
-  hours: formatTourDuration(item.duration, item.hours),
-  carHours: item.vehicle || item.carHours || '4WD Cruiser',
-  guide: item.guide || 'Certified Guide',
-  capacity: item.capacity || item.groupSize || '4 Persons',
-  price: formatTourPrice(item.price, item.currency),
-  image:
-    (Array.isArray(item.images) && item.images[0]) ||
-    item.image ||
-    item.coverImage ||
-    '/assets/cards/card5.jpg',
-});
+// Map backend DB tour document to frontend card model with all details preserved
+const mapTourItem = (item, idx) => {
+  const images =
+    Array.isArray(item.images) && item.images.length > 0
+      ? item.images.filter((img) => typeof img === 'string' && img.trim().length > 0)
+      : [item.image || item.coverImage || '/assets/cards/card5.jpg'];
+
+  if (images.length === 0) images.push('/assets/cards/card5.jpg');
+
+  return {
+    id: item._id || item.id || `tour-${idx}`,
+    _id: item._id,
+    title: item.title || 'Tour Package',
+    slug: item.slug,
+    description: item.description || '',
+    location: item.location || 'Dubai, UAE',
+    rating: item.rating ? String(item.rating) : '5.0',
+    hours: formatTourDuration(item.duration, item.hours),
+    duration: item.duration,
+    carHours: item.vehicle || item.carHours || '4WD Cruiser',
+    guide: item.guide || 'Certified Guide',
+    capacity: item.capacity || item.groupSize || '4 Persons',
+    price: formatTourPrice(item.price, item.currency),
+    originalPrice: item.originalPrice ? formatTourPrice(item.originalPrice, item.currency) : null,
+    currency: item.currency || 'AED',
+    image: images[0],
+    images,
+    category: item.category || 'Sightseeing Tour',
+    section: item.section || '',
+    highlights: Array.isArray(item.highlights) && item.highlights.length > 0 ? item.highlights : [],
+    included: Array.isArray(item.included) ? item.included : [],
+    activities: Array.isArray(item.activities) ? item.activities : [],
+    raw: item,
+  };
+};
 
 // Single Reusable Slider Sub-component with independent marquee controller
-function SingleTourSlider({ slider, onBookTour }) {
+function SingleTourSlider({ slider, onBookTour, onSelectTour }) {
   const { scrollPrev, scrollNext, hasDragged, containerProps } = useAutoManualScroll({
     speed: 0.9,
     cardWidth: 336,
@@ -131,10 +150,11 @@ function SingleTourSlider({ slider, onBookTour }) {
       key={`${keyPrefix}-${tour.id}`}
       className="tour-trip-card"
       onClick={() => {
-        if (!hasDragged() && onBookTour) {
-          onBookTour(tour.title, tour.price);
+        if (!hasDragged() && onSelectTour) {
+          onSelectTour(tour);
         }
       }}
+      title="Tap to view full tour details"
     >
       <div className="tour-card-img-wrap">
         <img
@@ -147,6 +167,10 @@ function SingleTourSlider({ slider, onBookTour }) {
             e.target.src = '/assets/cards/card5.jpg';
           }}
         />
+        <div className="tour-card-hover-hint">
+          <i className="fa-solid fa-arrow-up-right-from-square"></i>
+          <span>View Details</span>
+        </div>
       </div>
       <div className="tour-card-body">
         <div className="tour-card-header-meta">
@@ -182,10 +206,12 @@ function SingleTourSlider({ slider, onBookTour }) {
             className="btn-book-tour"
             onClick={(e) => {
               e.stopPropagation();
-              if (onBookTour) onBookTour(tour.title, tour.price);
+              if (onSelectTour) {
+                onSelectTour(tour);
+              }
             }}
           >
-            Book Now
+            View Details
           </button>
         </div>
       </div>
@@ -251,6 +277,7 @@ export default function ToursSection({ onBookTour }) {
   const { siteData } = useSiteData();
   const [liveTours, setLiveTours] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTour, setSelectedTour] = useState(null);
 
   // Sync with SiteDataContext
   useEffect(() => {
@@ -349,6 +376,7 @@ export default function ToursSection({ onBookTour }) {
             key={slider.id}
             slider={slider}
             onBookTour={onBookTour}
+            onSelectTour={setSelectedTour}
           />
         ))
       )}
@@ -359,6 +387,15 @@ export default function ToursSection({ onBookTour }) {
           REQUEST CUSTOM TOUR ITINERARY
         </a>
       </div>
+
+      {/* Detailed Tour Modal - opens when tapping on any tour card */}
+      {selectedTour && (
+        <TourDetailModal
+          tour={selectedTour}
+          onClose={() => setSelectedTour(null)}
+          onBookTour={onBookTour}
+        />
+      )}
     </section>
   );
 }
